@@ -14,25 +14,20 @@ Observability is how you understand what's happening inside your Kubernetes clus
 **Channel:** KodeKloud
 > Published October 2025 — comprehensive walkthrough of deploying Prometheus and Grafana on Kubernetes from scratch, with dashboards, alerts, and scrape config explained.
 
-### Kubernetes Monitoring with Prometheus and Grafana | Beginners Guide
-[![Thumbnail](https://img.youtube.com/vi/dzBGhlF4M1U/0.jpg)](https://www.youtube.com/watch?v=dzBGhlF4M1U)
-**Channel:** Anton Putra
-> Beginner-friendly guide to setting up the full Prometheus + Grafana monitoring stack on Kubernetes, including node-exporter and kube-state-metrics.
-
-### Kubernetes Monitoring Made Easy with Prometheus | KodeKloud
-[![Thumbnail](https://img.youtube.com/vi/6xmWr7p5TE0/0.jpg)](https://www.youtube.com/watch?v=6xmWr7p5TE0)
-**Channel:** KodeKloud
-> Accessible free lab-based course on Prometheus monitoring for Kubernetes — covers scrape configs, labels, PromQL basics, and Grafana dashboard creation.
-
 ### Project 5: Setup Monitoring and Alerting on Kubernetes | Prometheus and Grafana Tutorial
 [![Thumbnail](https://img.youtube.com/vi/gBdyIv9d_O8/0.jpg)](https://www.youtube.com/watch?v=gBdyIv9d_O8)
 **Channel:** Abhishek Veeramalla
 > Real-world project implementing a complete monitoring and alerting stack on Kubernetes — covers Alertmanager configuration and alert routing.
 
-### Kubernetes Monitoring with Prometheus | Edureka Rewind
+### Kubernetes Monitoring with Prometheus and Grafana | Edureka Rewind
 [![Thumbnail](https://img.youtube.com/vi/gjpCDP5lyig/0.jpg)](https://www.youtube.com/watch?v=gjpCDP5lyig)
 **Channel:** Edureka
 > February 2024 training session covering the complete Prometheus + Grafana stack on Kubernetes, including custom dashboards and node monitoring.
+
+### Falco: The Secret Weapon for Runtime Security
+[![Thumbnail](https://img.youtube.com/vi/PrxSAF0caHk/0.jpg)](https://www.youtube.com/watch?v=PrxSAF0caHk)
+> **Channel:** Viktor Farcic (DevOps Toolkit)
+> October 2024 — 21-minute focused deep dive into Falco as a runtime observability and security tool, covering rules, syscall monitoring, and integration patterns.
 
 ---
 
