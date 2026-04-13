@@ -9,15 +9,15 @@
 
 ## 🎥 YouTube Videos
 
-### Kubernetes Tutorial for Beginners [FULL COURSE in 4 Hours]
-[![Thumbnail](https://img.youtube.com/vi/X48VuDVv0do/0.jpg)](https://www.youtube.com/watch?v=X48VuDVv0do)
-**Channel:** TechWorld with Nana
-> The kubectl sections of this course cover the most common commands with practical demos — get, describe, apply, delete, exec, logs, port-forward, and more.
+### kubectl Basic Commands: Master Your First Kubernetes Operations (Beginner Tutorial)
+[![Thumbnail](https://img.youtube.com/vi/h3OTkmuKS3o/0.jpg)](https://www.youtube.com/watch?v=h3OTkmuKS3o)
+**Channel:** KodeKloud
+> October 2025 — focused 6-minute tutorial on the essential kubectl commands every Kubernetes practitioner needs: get, describe, apply, delete, logs, and exec.
 
-### Complete Kubernetes Course — From BEGINNER to PRO
-[![Thumbnail](https://img.youtube.com/vi/2T86xAtR6Fo/0.jpg)](https://www.youtube.com/watch?v=2T86xAtR6Fo)
-**Channel:** DevOps Directive
-> This 2024 course dedicates significant time to kubectl usage patterns, kubeconfig management, and navigating the Kubernetes API — essential hands-on practice.
+### Important Kubernetes kubectl Commands with Examples in 20 Minutes
+[![Thumbnail](https://img.youtube.com/vi/wS277TdV3f8/0.jpg)](https://www.youtube.com/watch?v=wS277TdV3f8)
+**Channel:** Cloud Native Simplified
+> December 2023 — a practical 20-minute walkthrough of the most-used kubectl commands with concrete examples, covering output formats, label selectors, and namespace flags.
 
 ### Kubernetes Explained in 15 Minutes | Hands On (2024 Edition)
 [![Thumbnail](https://img.youtube.com/vi/r2zuL9MW6wc/0.jpg)](https://www.youtube.com/watch?v=r2zuL9MW6wc)
