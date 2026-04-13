@@ -24,15 +24,10 @@ Istio is the most widely adopted service mesh for Kubernetes — it transparentl
 **Channel:** Anton Putra
 > Hands-on Istio tutorial covering real cluster setup — Ingress Gateway, VirtualService, traffic routing, and mTLS configuration with working YAML examples.
 
-### Service Mesh Explained in 60 Minutes | Istio mTLS and Observability
-[![Thumbnail](https://img.youtube.com/vi/eSNetKBe7Z8/0.jpg)](https://www.youtube.com/watch?v=eSNetKBe7Z8)
-**Channel:** CNCF
-> Deep-dive from a CNCF talk covering the full Istio feature set including mTLS, circuit breaking, observability with Kiali and Jaeger, and AuthorizationPolicy.
-
-### What is Istio? Service Mesh for Kubernetes
-[![Thumbnail](https://img.youtube.com/vi/B1QfWlrtfSE/0.jpg)](https://www.youtube.com/watch?v=B1QfWlrtfSE)
-**Channel:** DevOps Journey
-> Short, concise explainer on Istio as a Kubernetes service mesh — great first watch to understand the concept before diving into configuration.
+### Istio Service Mesh Explained
+[![Thumbnail](https://img.youtube.com/vi/KUHzxTCe5Uc/0.jpg)](https://www.youtube.com/watch?v=KUHzxTCe5Uc)
+**Channel:** That DevOps Guy
+> Focused 33-minute deep dive into Istio's architecture, sidecar injection, traffic management with VirtualService and DestinationRule, and how mTLS is enforced across the mesh.
 
 ---
 
