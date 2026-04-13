@@ -9,25 +9,25 @@ Kubernetes provides a rich storage model that separates the *what* (PersistentVo
 
 ## 🎥 YouTube Videos
 
-### Kubernetes Tutorial for Beginners [FULL COURSE in 4 Hours]
-[![Thumbnail](https://img.youtube.com/vi/X48VuDVv0do/0.jpg)](https://www.youtube.com/watch?v=X48VuDVv0do)
-**Channel:** TechWorld with Nana
-> Covers Kubernetes volumes, PersistentVolumes, PVCs, and ConfigMaps/Secrets in depth, with practical YAML examples you can follow along with.
+### Kubernetes Storage Explained | Persistent Volumes, PVC, Storage Classes, EBS & EFS in AWS EKS
+[![Thumbnail](https://img.youtube.com/vi/qbivLi7iDPw/0.jpg)](https://www.youtube.com/watch?v=qbivLi7iDPw)
+**Channel:** Anton Putra
+> February 2025 — focused 15-minute deep dive into Kubernetes storage: PersistentVolumes, PVCs, StorageClasses, and dynamic provisioning with practical AWS EKS examples.
 
-### Complete Kubernetes Course — From BEGINNER to PRO
-[![Thumbnail](https://img.youtube.com/vi/2T86xAtR6Fo/0.jpg)](https://www.youtube.com/watch?v=2T86xAtR6Fo)
-**Channel:** DevOps Directive
-> This 2024 course includes hands-on storage labs covering StorageClass dynamic provisioning, PVCs, and secret injection via environment variables and volume mounts.
+### Day 19/40 — Kubernetes ConfigMap and Secret | CKA Full Course 2024
+[![Thumbnail](https://img.youtube.com/vi/Q9fHJLSyd7Q/0.jpg)](https://www.youtube.com/watch?v=Q9fHJLSyd7Q)
+**Channel:** Abhishek Veeramalla (CKA 2024 Series)
+> July 2024 — practical 17-minute walkthrough of ConfigMaps and Secrets: how to create them, mount them as volumes, and inject them as environment variables into pods.
 
 ### Day 7/40 — Pod In Kubernetes Explained | Imperative VS Declarative | YAML Tutorial
 [![Thumbnail](https://img.youtube.com/vi/_f9ql2Y5Xcc/0.jpg)](https://www.youtube.com/watch?v=_f9ql2Y5Xcc)
 **Channel:** Abhishek Veeramalla
 > Includes a walkthrough of ConfigMaps and Secrets — how to create them, mount them as volumes, and inject them as environment variables into pods.
 
-### Kubernetes Crash Course for Absolute Beginners
-[![Thumbnail](https://img.youtube.com/vi/s_o8dwzRlu4/0.jpg)](https://www.youtube.com/watch?v=s_o8dwzRlu4)
-**Channel:** TechWorld with Nana
-> Covers the storage fundamentals including ConfigMaps and Secrets from a beginner perspective, with clear visuals explaining how volume mounts work.
+### Kubernetes Architecture Explained | Control Plane Components
+[![Thumbnail](https://img.youtube.com/vi/5zImYn0isPk/0.jpg)](https://www.youtube.com/watch?v=5zImYn0isPk)
+**Channel:** DevOps Shack
+> Covers the storage model from a cluster architecture perspective — how etcd, kubelet, and the storage subsystem interact for persistent workloads.
 
 ---
 
