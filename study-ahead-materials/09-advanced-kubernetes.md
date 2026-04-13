@@ -24,10 +24,15 @@ Once you're comfortable with the basics, Kubernetes has a rich set of advanced f
 **Channel:** Abhishek Veeramalla (CKA 2025 Series)
 > Hands-on demo of creating and using CRDs in a real cluster from the 2025 CKA series — includes a practical controller walkthrough.
 
-### Complete Kubernetes Course — From BEGINNER to PRO
-[![Thumbnail](https://img.youtube.com/vi/2T86xAtR6Fo/0.jpg)](https://www.youtube.com/watch?v=2T86xAtR6Fo)
-**Channel:** DevOps Directive
-> The advanced sections of this 2024 course cover HPA, node affinity, taints and tolerations, and resource quotas with hands-on labs.
+### 🚀 Horizontal Pod Autoscaling in Kubernetes | Master HPA in 10 Minutes!
+[![Thumbnail](https://img.youtube.com/vi/ADWQYCh0PJE/0.jpg)](https://www.youtube.com/watch?v=ADWQYCh0PJE)
+**Channel:** KodeKloud
+> October 2025 — focused 12-minute tutorial covering HPA configuration, metrics server setup, CPU-based autoscaling, and hands-on demonstration of pods scaling up and down.
+
+### Scaling Explained Through Kubernetes HPA, VPA, KEDA & Cluster Autoscaler
+[![Thumbnail](https://img.youtube.com/vi/HQY2jgSN6pA/0.jpg)](https://www.youtube.com/watch?v=HQY2jgSN6pA)
+**Channel:** DevOps Toolkit
+> July 2024 — 26-minute comprehensive breakdown comparing HPA, VPA, KEDA, and Cluster Autoscaler, including when to use each and how they interact.
 
 ### What The Heck Are Kubernetes Resources, CRs, CRDs, Operators, etc.?
 [![Thumbnail](https://img.youtube.com/vi/aM2Y9m2Kazk/0.jpg)](https://www.youtube.com/watch?v=aM2Y9m2Kazk)
