@@ -9,25 +9,25 @@ Kubernetes networking is one of the most important — and most complex — area
 
 ## 🎥 YouTube Videos
 
-### Kubernetes Tutorial for Beginners [FULL COURSE in 4 Hours]
-[![Thumbnail](https://img.youtube.com/vi/X48VuDVv0do/0.jpg)](https://www.youtube.com/watch?v=X48VuDVv0do)
-**Channel:** TechWorld with Nana
-> The services and networking section of this course covers ClusterIP, NodePort, and LoadBalancer service types with clear diagrams and live demos.
+### Kubernetes Services Explained (ClusterIP, LoadBalancer, NodePort)
+[![Thumbnail](https://img.youtube.com/vi/BYZgA2BBt4s/0.jpg)](https://www.youtube.com/watch?v=BYZgA2BBt4s)
+**Channel:** Anton Putra
+> October 2024 — focused 5-minute breakdown of the three key Kubernetes service types, explaining how traffic routing differs between ClusterIP, NodePort, and LoadBalancer with clear diagrams.
 
-### Complete Kubernetes Course — From BEGINNER to PRO
-[![Thumbnail](https://img.youtube.com/vi/2T86xAtR6Fo/0.jpg)](https://www.youtube.com/watch?v=2T86xAtR6Fo)
-**Channel:** DevOps Directive
-> This 2024 course includes hands-on networking sections — Services, Ingress setup with nginx-ingress, and Network Policies — all with working YAML examples.
+### Kubernetes Ingress Tutorial | Ingress Explained
+[![Thumbnail](https://img.youtube.com/vi/kf3UjITS91M/0.jpg)](https://www.youtube.com/watch?v=kf3UjITS91M)
+**Channel:** Abhishek Veeramalla (CKA 2024 Series)
+> Day 33 of the CKA 2024 series — deep beginner-friendly exploration of Kubernetes Ingress: how Ingress resources and Ingress controllers work together for HTTP routing and TLS termination.
+
+### Kubernetes Network Policies Explained
+[![Thumbnail](https://img.youtube.com/vi/18FEA5xXBGY/0.jpg)](https://www.youtube.com/watch?v=18FEA5xXBGY)
+**Channel:** That DevOps Guy
+> April 2023 — 19-minute practical guide showing how to define Network Policies to restrict access between pods using label selectors, with live demos and YAML examples.
 
 ### Kubernetes Architecture Explained | Control Plane Components
 [![Thumbnail](https://img.youtube.com/vi/5zImYn0isPk/0.jpg)](https://www.youtube.com/watch?v=5zImYn0isPk)
 **Channel:** DevOps Shack
 > Covers kube-proxy's role in the networking model and how iptables rules are used to route traffic to service endpoints.
-
-### Kubernetes Explained in 15 Minutes | Hands On (2024 Edition)
-[![Thumbnail](https://img.youtube.com/vi/r2zuL9MW6wc/0.jpg)](https://www.youtube.com/watch?v=r2zuL9MW6wc)
-**Channel:** Travis Media
-> Includes a practical walkthrough of creating Services and exposing applications — accessible for beginners learning Kubernetes networking for the first time.
 
 ---
 
