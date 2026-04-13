@@ -19,15 +19,15 @@ A Kubernetes cluster is made up of a **control plane** (the brain) and **worker 
 **Channel:** Cloud Native Simplified
 > Comprehensive 2025 breakdown of the control plane "brain" — how each component coordinates to schedule and reconcile workloads across the cluster.
 
-### Kubernetes Tutorial for Beginners [FULL COURSE in 4 Hours]
-[![Thumbnail](https://img.youtube.com/vi/X48VuDVv0do/0.jpg)](https://www.youtube.com/watch?v=X48VuDVv0do)
-**Channel:** TechWorld with Nana
-> The architecture section of this landmark course covers node components (kubelet, kube-proxy, container runtime) and how they interact with the control plane.
+### Kubernetes Architecture Simplified | K8s Explained in 10 Minutes | KodeKloud
+[![Thumbnail](https://img.youtube.com/vi/8C_SCDbUJTg/0.jpg)](https://www.youtube.com/watch?v=8C_SCDbUJTg)
+**Channel:** KodeKloud
+> A crisp 10-minute visual explainer using an analogy that makes control plane and worker node roles immediately clear — ideal for building your mental model.
 
-### Complete Kubernetes Course — From BEGINNER to PRO
-[![Thumbnail](https://img.youtube.com/vi/2T86xAtR6Fo/0.jpg)](https://www.youtube.com/watch?v=2T86xAtR6Fo)
-**Channel:** DevOps Directive
-> The 2024 edition includes hands-on exploration of cluster architecture using kind and minikube, showing how components are deployed and communicate.
+### Kubernetes Explained in 15 Minutes | Hands On (2024 Edition)
+[![Thumbnail](https://img.youtube.com/vi/r2zuL9MW6wc/0.jpg)](https://www.youtube.com/watch?v=r2zuL9MW6wc)
+**Channel:** Travis Media
+> Hands-on 2024 walkthrough that explores node components (kubelet, kube-proxy, container runtime) and how they interact with the control plane in a real cluster.
 
 ---
 
