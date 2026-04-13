@@ -24,10 +24,10 @@ DevSecOps integrates security into every phase of the software development and d
 **Channel:** CNCF
 > KubeCon 2024 lightning talk comparing Falco, Tracee, and Tetragon — three eBPF-based runtime security tools — explaining their strengths and use cases.
 
-### Deep Dive into Falco: Empower DevSecOps with Real-time Container Security
-[![Thumbnail](https://img.youtube.com/vi/MgU-uBmysNE/0.jpg)](https://www.youtube.com/watch?v=MgU-uBmysNE)
-**Channel:** Sysdig
-> Webinar exploring Falco's threat detection capabilities — rules engine, syscall monitoring, and Kubernetes audit log integration for real-time security alerting.
+### Falco: The Secret Weapon for Runtime Security
+[![Thumbnail](https://img.youtube.com/vi/PrxSAF0caHk/0.jpg)](https://www.youtube.com/watch?v=PrxSAF0caHk)
+**Channel:** Viktor Farcic (DevOps Toolkit)
+> October 2024 — focused 21-minute deep dive into Falco's threat detection capabilities — rules engine, syscall monitoring, and Kubernetes audit log integration for real-time security alerting.
 
 ### Kubernetes Security Tools: DevSecOps Keynote | Falco | Kubescape | Terrascan
 [![Thumbnail](https://img.youtube.com/vi/wegwfm1t-kg/0.jpg)](https://www.youtube.com/watch?v=wegwfm1t-kg)
