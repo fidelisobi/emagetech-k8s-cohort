@@ -1,41 +1,64 @@
-# Kubernetes January 2026 Cohort — Zoom Links
+# Kubernetes January 2026 Cohort
 
-> All meeting links and recordings from the `#kubernetes-january-2026-cohort` Slack channel.
-
-| # | Meeting Name | Date | URL | Passcode |
-|---|---|---|---|---|
-| 1 | Kickoff Session Recording | 2026-01-16 | https://us02web.zoom.us/rec/share/2k6YVfHhqdNZrPtMJK1FyCSlVoLrXpmDNGU9yErZnon_aMcFSR5GqKkTknw2AdOw.11ZwLAu9tWou08Xg | PNws$No9 |
-| 2 | Zoom Meeting | 2026-01-14 | https://us02web.zoom.us/j/88524749555?pwd=h8QWaLbYgKNQXgbXr7NaDTxEXbOsRx.1 | 471465 |
-| 3 | Linux Training Class (recurring Fri) | 2026-01-16 | https://us02web.zoom.us/j/89312173053?pwd=liAQnknxodcI6oTJjtixxMWbCW4uLA.1 | 189238 |
-| 4 | Class 1 Recording | 2026-01-17 | https://us02web.zoom.us/rec/share/J4emgky248QmtnRPV33SxPRJcT1tNSv6btq-7yzz5AlNUWc2cCcj__aCPP672Rvc.rit0s3UbJ2WOf96I | 8d+cvH?9 |
-| 5 | Linux Training Session II (recurring Wed) | 2026-01-21 | https://us02web.zoom.us/j/88675316064?pwd=2e8C4LdrOxpqmL8LQEy1mIUgRt4dgF.1 | 228938 |
-| 6 | Class Recording | 2026-01-22 | https://us02web.zoom.us/rec/share/zffz7N1oyAukYnHuOzu0BlbTJ_fcAxJWchIUvX8ip-f0JEEr2SJ6JQMMD214kpmz.KzE1FePb1LmjJPMe | WU&UD2Lv |
-| 7 | Class Link | 2026-01-24 | https://us02web.zoom.us/rec/share/BT8sPyfBTYg3gp-2NcznUtvO0azuakF33BjhAeb_tjqR7buxSaKP1ZPS6HL1dpfr.msg1OpI2TbGv9ym0 | 30?bZm3K |
-| 8 | Recording for Today's Class | 2026-01-31 | https://us02web.zoom.us/rec/share/1cge0RzXxwmfxfcdTB2GJ_qVUh_cHuLQb-Xu1NVvGazSqMCZhvwxrHa_bSFfcbZF.qRHbzZudUdDDdOKd | +*$9kmjH |
-| 9 | Recording for Yesterday's Class | 2026-02-05 | https://us02web.zoom.us/rec/share/M4h0kKlBNcvx4h9XbZoYuW6hAnBw8_sYkFcIssZfoumTeuDm2DZ2xp9-F_XxzzdX.VDQuhVvaW1F0y_a7 | L7W5?kn8 |
-| 10 | Friday's Class Recording | 2026-02-07 | https://us02web.zoom.us/rec/share/i_xoyPCLbAQeEd8_hFtsXjOOVA9m1vZrMsaxvTuN43CoxTFuo3gw_dIseDeocInw.dqY94_4-lGFy_dGG | #MpUJ7#h |
-| 11 | Class Recording | 2026-02-11 | https://us02web.zoom.us/rec/share/NJHOhcpm51F1Dq7PyHOIRM4-8yzgZB5tzRNAa9Gbenr3gBKqRmehWYimbjmijnY.6ShpsrCU7FSRGIub | 579$AEq= |
-| 12 | Class Recording | 2026-02-13 | https://us02web.zoom.us/rec/share/e9Pz5bN9kch817E-GJ8EFAIaqtLcI9hQbqJ0pVDZ7fl4Ee9026UQhmtt8kopwKsJ.UgSLfRxDy507C84V | 4BCY=!^9 |
-| 13 | Today's Class Recordings | 2026-02-19 | https://us02web.zoom.us/rec/share/chr5oNrufi9hcmTI38zLmYHpb6Xa5o0ipwF8CbGzLGsORi2GrbIMhYuDJzrsO6Zy.myQ02F043xMwaBqn | n1osiH&n |
-| 14 | Class Recording | 2026-02-20 | https://us02web.zoom.us/rec/share/X4FMzsjebe2HzP7mPyxnaQcaxb6DGWTmYXmF2hj33g86qXrWnLQ54wdZT6gaXjRp.qb4DpZ1mY2xGyi5H | rg@h5Fm* |
-| 15 | Class Recording | 2026-02-25 | https://us02web.zoom.us/rec/share/TBs0bfbovglMbr7-JBVeNRm7pAiVPitdQQN3FPc4OKcDZLNWQELwQEdCEO76Gns3.rsi11CKbCqoVYbs_ | !*r1+v1s |
-| 16 | Class Recording | 2026-02-27 | https://us02web.zoom.us/rec/share/Dl7Qm4LfMMgnijTqaY-Jg-GoaDtsRBPcbyjSMtBQbKG_ma410P1qRpJzw1gBHWjT.Z-Ks-SEpT_lW3jQn | ?1zDL@x? |
-| 17 | Linux Session March 7th | 2026-03-07 | https://us02web.zoom.us/j/81285052200?pwd=igeQRZHQDDduAEYZafFQshW9rBus21.1 | 187454 |
-| 18 | Class Recording | 2026-03-09 | https://us02web.zoom.us/rec/share/lJjrE2_rbjwd1Fd4QBx_HBAUhPp7eQHj8DGrhcvDnAOOimxTSwTLRQwx-YyTQpAu.zvEVqPuwsCJ1ACeJ | %U2%m#HZ |
-| 19 | Class Recording | 2026-03-13 | https://us02web.zoom.us/rec/share/ybtPO_b71nUONvD9Y1LP0-JbTP_3E_EQ6Cbhm8Xx-tVXVZTB8twanjtNjXZRPMlb.tVV5FRJ8PVg3G22e | s77MM^4D |
-| 20 | Class Recording | 2026-03-14 | https://us02web.zoom.us/rec/share/dDEksmXY7XcELC0r_KECPmOUlS-BCJPelX-EUah0kQOvUwUYepX6HnBdn3ccy8jp.cM72UzChToh0sngN | #jr#1m.p |
-| 21 | Join Meeting | 2026-03-21 | https://us05web.zoom.us/j/82647554267?pwd=cCQvMaXKasdkRMsu6me4xvZTzHCjTR.1 | |
-| 22 | Recording for Friday's Session | 2026-03-24 | https://us02web.zoom.us/rec/share/gZjftWvacqDnr8QLws_2QSUJT5yvJYn2pezrwh6Ek2RDB9uN-E-bBMAenIVikCWJ.qWJZhtmqULFg79Tq | 8XPbbC#S |
-| 23 | Yesterday's Class Recording | 2026-03-26 | https://us02web.zoom.us/rec/share/y29mk8irjLY0SOv2woafZiPcgdlkNEET3iOUt7p90Uv971W5-wHNc_-EEj02qoaQ.p4OsxqJMgh2FthDE | %U2%m#HZ |
+Welcome to the official repository for the **Kubernetes January 2026 Cohort** by Emagetech. This repo contains all class materials, recordings, and resources you need throughout the program.
 
 ---
 
-## Recurring Meeting Links
+## 📁 Repository Structure
 
-| Meeting | Link | Passcode |
-|---|---|---|
-| Linux Training Class (Fridays 6:30pm CT) | https://us02web.zoom.us/j/89312173053?pwd=liAQnknxodcI6oTJjtixxMWbCW4uLA.1 | 189238 |
-| Linux Training Session II (Wednesdays 7:30pm CT) | https://us02web.zoom.us/j/88675316064?pwd=2e8C4LdrOxpqmL8LQEy1mIUgRt4dgF.1 | 228938 |
+```
+├── k8s-prereqs/          # Pre-requisite phase — Linux, Cloud Computing, foundational sessions
+│   └── recordings.md     # All Zoom links and recordings from the pre-req phase
+│
+├── class-materials/      # Main Kubernetes class content (slides, labs, assignments)
+│
+├── study-ahead-materials/ # Self-study topics to get ahead — core K8s concepts
+│
+└── TUTORIALS.md          # Curated tutorials and external learning resources
+```
 
 ---
-*Last updated: 2026-03-29 | Source: #kubernetes-january-2026-cohort Slack channel*
+
+## 🚀 Getting Started
+
+1. **New to the cohort?** Start with `k8s-prereqs/recordings.md` to catch up on pre-req sessions
+2. **Kubernetes class started?** Head to `class-materials/` for slides, labs, and assignments
+3. **Want to get ahead?** Browse `study-ahead-materials/` for self-paced deep dives
+
+---
+
+## 📚 Sections
+
+### [k8s-prereqs/](./k8s-prereqs/recordings.md)
+All Zoom recordings and meeting links from the pre-requisite phase of the cohort — Linux fundamentals, cloud computing, and intro sessions (Jan–Mar 2026).
+
+### [class-materials/](./class-materials/)
+Main Kubernetes class content. Slides, lab guides, assignments, and session recordings will be added here as the course progresses. **Class kicks off April 16, 2026.**
+
+### [study-ahead-materials/](./study-ahead-materials/)
+Self-study guides covering core Kubernetes topics — pods, networking, storage, security, Helm, observability, Argo CD, Istio, and more. Great for getting ahead or reinforcing what was covered in class.
+
+### [TUTORIALS.md](./TUTORIALS.md)
+Curated list of external tutorials, YouTube videos, and resources recommended by instructors and TAs.
+
+---
+
+## 📅 Class Schedule
+
+| Phase | Dates | Location |
+|-------|-------|----------|
+| Pre-Requisites (Linux & Cloud) | Jan–Mar 2026 | Zoom (see k8s-prereqs/) |
+| Kubernetes Kickoff | Apr 16, 2026 @ 6PM CST | Zoom (link TBA) |
+| Kubernetes Main Class | Apr 2026 onwards | Zoom |
+
+---
+
+## 🤝 Need Help?
+
+- Drop a message in the `#kubernetes-january-2026-cohort` Slack channel
+- Reach out to your Teaching Assistants
+- Contact Kenna directly at kenna.ofoegbu@gmail.com
+
+---
+
+*Last updated: 2026-04-13 | Emagetech*
