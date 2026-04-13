@@ -19,15 +19,15 @@ The Pod is the fundamental unit of work in Kubernetes — the smallest deployabl
 **Channel:** Travis Media
 > Hands-on 2024 walkthrough that includes pod creation, inspection, and interaction using `kubectl`. A great visual introduction to how pods work in practice.
 
-### Kubernetes Tutorial for Beginners [FULL COURSE in 4 Hours]
-[![Thumbnail](https://img.youtube.com/vi/X48VuDVv0do/0.jpg)](https://www.youtube.com/watch?v=X48VuDVv0do)
-**Channel:** TechWorld with Nana
-> The pods section of this comprehensive course covers pod spec anatomy, multi-container pods, and how pods relate to higher-level workload controllers.
+### Kubernetes Health Checks: Liveness vs Readiness Probes Explained
+[![Thumbnail](https://img.youtube.com/vi/dO97BlKaLog/0.jpg)](https://www.youtube.com/watch?v=dO97BlKaLog)
+**Channel:** Cloud Native Simplified
+> October 2025 — concise 5-minute explainer on liveness and readiness probes, covering what they check, when they trigger restarts, and why readiness controls traffic routing.
 
-### Complete Kubernetes Course — From BEGINNER to PRO
-[![Thumbnail](https://img.youtube.com/vi/2T86xAtR6Fo/0.jpg)](https://www.youtube.com/watch?v=2T86xAtR6Fo)
-**Channel:** DevOps Directive
-> 2024 course that covers pod resource requests and limits, QoS classes, and practical demos of liveness and readiness probes in real cluster environments.
+### Kubernetes Liveness & Readiness Probes Explained (Live Demo) | K8s for Beginners - Day 5
+[![Thumbnail](https://img.youtube.com/vi/RCNLkb5fgTc/0.jpg)](https://www.youtube.com/watch?v=RCNLkb5fgTc)
+**Channel:** DevOps Journey
+> July 2025 — hands-on 29-minute live demo covering HTTP, TCP, and exec probes with real YAML configurations and failure scenarios in a working cluster.
 
 ---
 
