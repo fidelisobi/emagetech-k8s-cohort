@@ -14,15 +14,15 @@ Running bare pods in production is an anti-pattern — controllers manage pods, 
 **Channel:** Abhishek Veeramalla
 > Published September 2024 — practical hands-on demos of canary, blue-green, and rolling update strategies in Kubernetes, with real YAML configurations.
 
-### Kubernetes Tutorial for Beginners [FULL COURSE in 4 Hours]
-[![Thumbnail](https://img.youtube.com/vi/X48VuDVv0do/0.jpg)](https://www.youtube.com/watch?v=X48VuDVv0do)
-**Channel:** TechWorld with Nana
-> The workloads section covers Deployments, ReplicaSets, and StatefulSets with live demos — a great foundation for understanding how controllers work together.
+### Kubernetes Rolling Updates Explained | Zero-Downtime Deployments Tutorial
+[![Thumbnail](https://img.youtube.com/vi/78s-fW-zv6E/0.jpg)](https://www.youtube.com/watch?v=78s-fW-zv6E)
+**Channel:** KodeKloud
+> October 2025 — focused 5-minute explainer on how rolling updates work, covering maxSurge, maxUnavailable, and zero-downtime deployment patterns.
 
-### Complete Kubernetes Course — From BEGINNER to PRO
-[![Thumbnail](https://img.youtube.com/vi/2T86xAtR6Fo/0.jpg)](https://www.youtube.com/watch?v=2T86xAtR6Fo)
-**Channel:** DevOps Directive
-> This 2024 course includes hands-on labs for Deployments, DaemonSets, Jobs and CronJobs, complete with rollout management and rollback procedures.
+### Kubernetes StatefulSets Explained: Managing Stateful Applications for Beginners
+[![Thumbnail](https://img.youtube.com/vi/XEPwSetgjf4/0.jpg)](https://www.youtube.com/watch?v=XEPwSetgjf4)
+**Channel:** KodeKloud
+> October 2025 — concise 4-minute breakdown of StatefulSets: stable pod identities, ordered deployment, and when to use StatefulSet vs. Deployment.
 
 ### Rolling Update Vs Blue Green Deployment Vs Canary Deployment
 [![Thumbnail](https://img.youtube.com/vi/nszj8ZEtl_I/0.jpg)](https://www.youtube.com/watch?v=nszj8ZEtl_I)
