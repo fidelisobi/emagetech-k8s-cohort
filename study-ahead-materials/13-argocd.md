@@ -19,15 +19,15 @@ GitOps is a modern operational model where Git is the single source of truth for
 **Channel:** Akuity
 > Concise, hands-on demo of the App of Apps pattern in ArgoCD — a powerful GitOps strategy for managing multiple applications declaratively. By an Argo core contributor.
 
-### Kubernetes Tutorial for Beginners [FULL COURSE in 4 Hours]
-[![Thumbnail](https://img.youtube.com/vi/X48VuDVv0do/0.jpg)](https://www.youtube.com/watch?v=X48VuDVv0do)
-**Channel:** TechWorld with Nana
-> This course includes an introduction to GitOps concepts and ArgoCD integration as part of a real-world Kubernetes deployment pipeline.
+### ArgoCD Tutorial: GitOps Continuous Delivery for Kubernetes | Complete Beginner Guide
+[![Thumbnail](https://img.youtube.com/vi/TO-yZ1wHJVQ/0.jpg)](https://www.youtube.com/watch?v=TO-yZ1wHJVQ)
+**Channel:** KodeKloud
+> October 2025 — focused 8-minute beginner-friendly introduction to ArgoCD and GitOps, covering installation, creating your first Application, and understanding sync policies.
 
-### Complete Kubernetes Course — From BEGINNER to PRO
-[![Thumbnail](https://img.youtube.com/vi/2T86xAtR6Fo/0.jpg)](https://www.youtube.com/watch?v=2T86xAtR6Fo)
-**Channel:** DevOps Directive
-> The GitOps section of this 2024 course covers ArgoCD setup and usage, including application definition, sync policies, and integration with CI pipelines.
+### Kubernetes Explained in 15 Minutes | Hands On (2024 Edition)
+[![Thumbnail](https://img.youtube.com/vi/r2zuL9MW6wc/0.jpg)](https://www.youtube.com/watch?v=r2zuL9MW6wc)
+**Channel:** Travis Media
+> This course includes an introduction to GitOps concepts and how ArgoCD integrates as part of a real-world Kubernetes deployment pipeline.
 
 ---
 
