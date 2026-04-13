@@ -14,25 +14,20 @@ This section introduces Kubernetes — what it is, why it exists, and how it wor
 **Channel:** Travis Media
 > A crisp, hands-on 2024 overview of what Kubernetes is and the problems it solves — perfect first watch. Covers containers, pods, nodes, and basic architecture.
 
-### Kubernetes Tutorial for Beginners [FULL COURSE in 4 Hours]
-[![Thumbnail](https://img.youtube.com/vi/X48VuDVv0do/0.jpg)](https://www.youtube.com/watch?v=X48VuDVv0do)
-**Channel:** TechWorld with Nana
-> The most-watched Kubernetes beginners course on YouTube. Covers architecture, components, YAML manifests, deployments, services and more with live demos.
+### Kubernetes Architecture Simplified | K8s Explained in 10 Minutes | KodeKloud
+[![Thumbnail](https://img.youtube.com/vi/8C_SCDbUJTg/0.jpg)](https://www.youtube.com/watch?v=8C_SCDbUJTg)
+**Channel:** KodeKloud
+> A concise 10-minute explainer using a ships analogy that makes the control plane and worker node architecture immediately intuitive — great visual foundation.
 
-### Complete Kubernetes Course — From BEGINNER to PRO
-[![Thumbnail](https://img.youtube.com/vi/2T86xAtR6Fo/0.jpg)](https://www.youtube.com/watch?v=2T86xAtR6Fo)
-**Channel:** DevOps Directive
-> Published in 2024, this comprehensive course walks through deploying real applications on Kubernetes, covering declarative config, controllers, and the full lifecycle.
+### Day 7/40 — Pod In Kubernetes Explained | Imperative VS Declarative | YAML Tutorial
+[![Thumbnail](https://img.youtube.com/vi/_f9ql2Y5Xcc/0.jpg)](https://www.youtube.com/watch?v=_f9ql2Y5Xcc)
+**Channel:** Abhishek Veeramalla (CKA 2024 Series)
+> From the 2024 CKA series — covers pod fundamentals, imperative vs. declarative creation, and YAML manifest structure. Directly relevant to core Kubernetes concepts.
 
-### Kubernetes Crash Course for Absolute Beginners
-[![Thumbnail](https://img.youtube.com/vi/s_o8dwzRlu4/0.jpg)](https://www.youtube.com/watch?v=s_o8dwzRlu4)
-**Channel:** TechWorld with Nana
-> A focused 1-hour crash course ideal for those who want to understand the essentials before diving into a longer course. Covers all key concepts with clear visuals.
-
-### Kubernetes Course — Full Beginners Tutorial
-[![Thumbnail](https://img.youtube.com/vi/d6WC5n9G_sM/0.jpg)](https://www.youtube.com/watch?v=d6WC5n9G_sM)
-**Channel:** freeCodeCamp.org
-> Full-length tutorial from freeCodeCamp that walks through containerizing applications and deploying to Kubernetes, great for hands-on learners.
+### Kubernetes Control Plane Explained: API Server, Scheduler, Controller Manager & etcd
+[![Thumbnail](https://img.youtube.com/vi/K9-6wgc6Ov8/0.jpg)](https://www.youtube.com/watch?v=K9-6wgc6Ov8)
+**Channel:** Cloud Native Simplified
+> Comprehensive 2025 breakdown of the control plane "brain" — how each component coordinates to schedule and reconcile workloads across the cluster.
 
 ---
 
