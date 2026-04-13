@@ -14,20 +14,20 @@ Kubernetes troubleshooting is a core skill — production incidents are inevitab
 **Channel:** Abhishek Veeramalla
 > Published April 2024 — three realistic CrashLoopBackOff scenarios with root cause analysis and fixes, including OOMKilled. Real-world problem-solving approach.
 
-### Kubernetes Tutorial for Beginners [FULL COURSE in 4 Hours]
-[![Thumbnail](https://img.youtube.com/vi/X48VuDVv0do/0.jpg)](https://www.youtube.com/watch?v=X48VuDVv0do)
-**Channel:** TechWorld with Nana
-> Includes troubleshooting sections throughout — covers using `kubectl logs`, `kubectl describe`, `kubectl exec`, and reading Events to diagnose pod issues.
-
-### Complete Kubernetes Course — From BEGINNER to PRO
-[![Thumbnail](https://img.youtube.com/vi/2T86xAtR6Fo/0.jpg)](https://www.youtube.com/watch?v=2T86xAtR6Fo)
-**Channel:** DevOps Directive
-> The 2024 edition dedicates significant content to debugging Kubernetes workloads — includes `kubectl debug`, ephemeral containers, and cluster-level diagnostics.
+### 4 Simple Commands To Troubleshoot Kubernetes (2024)
+[![Thumbnail](https://img.youtube.com/vi/1RSlP-mQrP0/0.jpg)](https://www.youtube.com/watch?v=1RSlP-mQrP0)
+**Channel:** That DevOps Guy
+> June 2024 — a quick 3-minute practical guide to the four kubectl commands that solve the majority of Kubernetes debugging scenarios — essential quick reference.
 
 ### Kubernetes Architecture Explained | Control Plane Components
 [![Thumbnail](https://img.youtube.com/vi/5zImYn0isPk/0.jpg)](https://www.youtube.com/watch?v=5zImYn0isPk)
 **Channel:** DevOps Shack
 > Understanding architecture is prerequisite to troubleshooting — this video helps you know where to look when things go wrong at the cluster level (e.g., scheduler issues, etcd connectivity).
+
+### Day 18/40 — Kubernetes Health Probes Explained | Liveness vs Readiness Probes
+[![Thumbnail](https://img.youtube.com/vi/x2e6pIBLKzw/0.jpg)](https://www.youtube.com/watch?v=x2e6pIBLKzw)
+**Channel:** Abhishek Veeramalla (CKA 2024 Series)
+> July 2024 — 28-minute hands-on session on health probes, covering how misconfigured probes cause CrashLoopBackOff and how to diagnose and fix them.
 
 ---
 
