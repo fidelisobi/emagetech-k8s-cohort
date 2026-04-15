@@ -1,0 +1,109 @@
+# ============================================================
+# Lab 20 — Persistent Storage
+# File 03: StatefulSet with volumeClaimTemplates
+# ============================================================
+# A StatefulSet's volumeClaimTemplates automatically provisions
+# a SEPARATE PVC for EACH pod replica.
+#
+# With 3 replicas and a template named "data", Kubernetes creates:
+#   data-db-store-0   (bound to pod db-store-0)
+#   data-db-store-1   (bound to pod db-store-1)
+#   data-db-store-2   (bound to pod db-store-2)
+#
+# CRITICAL BEHAVIOR: When you scale down or delete the StatefulSet,
+# the PVCs are NOT deleted automatically.  This is intentional —
+# it protects data from accidental deletion.  You must manually
+# delete PVCs to reclaim storage.
+#
+# Apply:
+#   kubectl apply -f 03-statefulset-storage.yaml
+# ============================================================
+
+# --- Headless Service ----------------------------------------
+# Required by StatefulSet for stable pod DNS names.
+apiVersion: v1
+kind: Service
+metadata:
+  name: db-store-headless
+  namespace: storage-lab
+  labels:
+    lab: "20-storage"
+spec:
+  clusterIP: None         # headless — no VIP, DNS returns pod IPs
+  selector:
+    app: db-store
+  ports:
+    - name: app
+      port: 8080
+      targetPort: 8080
+
+---
+# --- StatefulSet ---------------------------------------------
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: db-store
+  namespace: storage-lab
+  labels:
+    lab: "20-storage"
+spec:
+  serviceName: "db-store-headless"  # links to the headless Service above
+  replicas: 3
+
+  selector:
+    matchLabels:
+      app: db-store
+
+  template:
+    metadata:
+      labels:
+        app: db-store
+    spec:
+      containers:
+        - name: store
+          image: busybox:1.36
+          command: ["sh", "-c"]
+          args:
+            - |
+              # Each pod writes its own identity file to its own PVC.
+              # This lets you verify that each pod has isolated storage.
+              echo "Pod $(hostname) started at $(date -u '+%Y-%m-%dT%H:%M:%SZ')" \
+                > /data/pod-identity.txt
+              echo "My PVC is unique to me — no other pod can see this file."  \
+                >> /data/pod-identity.txt
+              echo "Identity file written for $(hostname)"
+              # Keep the pod alive for inspection
+              while true; do
+                echo "$(hostname) is alive: $(date -u '+%H:%M:%S')"
+                sleep 30
+              done
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "32Mi"
+            limits:
+              cpu: "100m"
+              memory: "64Mi"
+          volumeMounts:
+            # This name must match a name in volumeClaimTemplates below
+            - name: data
+              mountPath: /data
+
+  # --- volumeClaimTemplates -----------------------------------
+  # This is the StatefulSet-specific feature. Instead of defining
+  # a single volume, you define a TEMPLATE. Kubernetes creates one
+  # PVC per pod, named: <template-name>-<statefulset-name>-<ordinal>
+  #
+  # Result: data-db-store-0, data-db-store-1, data-db-store-2
+  volumeClaimTemplates:
+    - metadata:
+        name: data                    # prefix for auto-generated PVC names
+        labels:
+          lab: "20-storage"
+      spec:
+        accessModes:
+          - ReadWriteOnce             # each PVC is exclusive to its pod
+        storageClassName: standard    # GKE standard (GCE PD)
+        resources:
+          requests:
+            storage: 1Gi             # each pod gets 1 GiB

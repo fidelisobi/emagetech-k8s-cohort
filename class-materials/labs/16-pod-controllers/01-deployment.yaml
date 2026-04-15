@@ -1,0 +1,81 @@
+# ============================================================
+# Lab 16 — Pod Controllers
+# File 01: Deployment
+# ============================================================
+# A Deployment manages a ReplicaSet, which manages Pods.
+# The Deployment controller reconciles desired state (spec.replicas)
+# with actual state, and handles rolling updates and rollbacks.
+#
+# Apply:
+#   kubectl create namespace controllers-lab
+#   kubectl apply -f 01-deployment.yaml
+# ============================================================
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-app
+  namespace: controllers-lab
+  labels:
+    lab: "16-pod-controllers"
+  # Annotations used by `kubectl rollout` to track change cause.
+  # Set with: kubectl annotate deployment web-app kubernetes.io/change-cause="initial deploy v1.25"
+  annotations:
+    kubernetes.io/change-cause: "initial deploy — nginx 1.25"
+spec:
+  # --- Replica count ------------------------------------------
+  replicas: 3   # desired number of pod copies
+
+  # --- Pod selection ------------------------------------------
+  # The Deployment uses this selector to find which pods IT owns.
+  # This must match the pod template labels below.
+  selector:
+    matchLabels:
+      app: web-app
+
+  # --- Update strategy ----------------------------------------
+  # RollingUpdate is the default — it updates pods incrementally
+  # to keep the app available during the update.
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      # maxSurge: how many extra pods can exist above `replicas`
+      # during an update.  Set to 1 → at most 4 pods at once.
+      maxSurge: 1
+      # maxUnavailable: how many pods can be unavailable during
+      # an update.  Set to 0 → all 3 pods must be up at all times.
+      maxUnavailable: 0
+
+  # --- Pod template -------------------------------------------
+  # This is the blueprint the Deployment uses to create pods.
+  # The ReplicaSet that the Deployment creates will use this
+  # exact template (with a hash appended to its name).
+  template:
+    metadata:
+      labels:
+        app: web-app           # must match spec.selector.matchLabels
+        version: "1.25"        # used to observe ReplicaSet changes
+    spec:
+      containers:
+        - name: web
+          image: nginx:1.25-alpine   # change to 1.27-alpine to trigger rolling update
+          ports:
+            - containerPort: 80
+              name: http
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "64Mi"
+            limits:
+              cpu: "100m"
+              memory: "128Mi"
+          # Readiness probe: pod is only added to Service endpoints
+          # when this probe succeeds.  With maxUnavailable: 0 this
+          # ensures the rolling update waits for each new pod to be
+          # ready before replacing the next old one.
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 3   # wait 3s before first check
+            periodSeconds: 5         # check every 5s

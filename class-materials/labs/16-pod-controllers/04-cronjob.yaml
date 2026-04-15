@@ -1,0 +1,92 @@
+# ============================================================
+# Lab 16 — Pod Controllers
+# File 04: CronJob
+# ============================================================
+# A CronJob creates a Job on a recurring schedule using standard
+# Unix cron syntax:
+#
+#   ┌───── minute  (0-59)
+#   │ ┌───── hour    (0-23)
+#   │ │ ┌───── day of month (1-31)
+#   │ │ │ ┌───── month (1-12)
+#   │ │ │ │ ┌───── day of week (0-6, 0=Sunday)
+#   │ │ │ │ │
+#   * * * * *
+#
+# "*/1 * * * *" means: every minute.
+#
+# Apply:
+#   kubectl apply -f 04-cronjob.yaml
+# To watch jobs being created:
+#   kubectl get jobs -n controllers-lab -w
+# ============================================================
+
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: timestamp-logger
+  namespace: controllers-lab
+  labels:
+    lab: "16-pod-controllers"
+spec:
+  # Cron schedule — run every minute
+  schedule: "*/1 * * * *"
+
+  # What to do if the previous job is still running when the next
+  # schedule fires.
+  #   Allow    → run the new job anyway (overlap is OK)
+  #   Forbid   → skip the new job (default for most workloads)
+  #   Replace  → cancel the running job and start a new one
+  concurrencyPolicy: Forbid
+
+  # How many successful Job records to keep for history/debugging
+  successfulJobsHistoryLimit: 3
+
+  # How many failed Job records to keep
+  failedJobsHistoryLimit: 1
+
+  # If a scheduled run is missed by more than this many seconds,
+  # it is skipped entirely (prevents large catch-up storms after
+  # a cluster outage).
+  startingDeadlineSeconds: 60
+
+  # suspend: true pauses the CronJob without deleting it.
+  # Set this to true in the lab to stop new jobs from firing.
+  suspend: false
+
+  jobTemplate:
+    spec:
+      # Job-level settings
+      backoffLimit: 1
+      ttlSecondsAfterFinished: 60   # clean up 60s after completion
+
+      template:
+        metadata:
+          labels:
+            app: timestamp-logger
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: logger
+              image: busybox:1.36
+              command: ["sh", "-c"]
+              args:
+                - |
+                  echo "========================================="
+                  echo "CronJob run at: $(date -u '+%Y-%m-%dT%H:%M:%SZ')"
+                  echo "Pod name:  $(hostname)"
+                  echo "Namespace: ${POD_NAMESPACE:-unknown}"
+                  echo "========================================="
+              env:
+                # Inject namespace via Downward API for logging context
+                - name: POD_NAMESPACE
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.namespace
+              resources:
+                requests:
+                  cpu: "50m"
+                  memory: "16Mi"
+                limits:
+                  cpu: "100m"
+                  memory: "32Mi"

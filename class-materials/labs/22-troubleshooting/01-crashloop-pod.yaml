@@ -1,0 +1,56 @@
+# ============================================================
+# Lab 22 — Troubleshooting Scenarios
+# File 01: CrashLoopBackOff
+# ============================================================
+# SCENARIO: The operations team reports that "app is down".
+# The pod shows status CrashLoopBackOff.
+#
+# ROOT CAUSE (spoiler — try to find it first!):
+#   The container command references a binary that does not exist
+#   in the image (/bin/launch-app).  The container exits immediately
+#   with a non-zero exit code.  Kubernetes restarts it, backs off
+#   exponentially (10s, 20s, 40s…), and shows CrashLoopBackOff.
+#
+# DIAGNOSIS COMMANDS:
+#   kubectl describe pod crashloop-pod -n troubleshoot-lab
+#   kubectl logs crashloop-pod -n troubleshoot-lab
+#   kubectl logs crashloop-pod -n troubleshoot-lab --previous
+#
+# Apply:
+#   kubectl create namespace troubleshoot-lab
+#   kubectl apply -f 01-crashloop-pod.yaml
+# ============================================================
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: crashloop-pod
+  namespace: troubleshoot-lab
+  labels:
+    lab: "22-troubleshooting"
+    scenario: "crashloop"
+spec:
+  # restartPolicy: Always (default) causes Kubernetes to keep
+  # restarting the container after each crash → CrashLoopBackOff
+  restartPolicy: Always
+  containers:
+    - name: app
+      image: busybox:1.36
+      # BUG: /bin/launch-app does not exist in the busybox image.
+      # The container will exit with "exec: /bin/launch-app: not found"
+      command: ["/bin/launch-app"]
+      args: ["--config", "/etc/app/config.yaml"]
+      resources:
+        requests:
+          cpu: "50m"
+          memory: "32Mi"
+        limits:
+          cpu: "100m"
+          memory: "64Mi"
+
+# ============================================================
+# FIX: Change the command to a valid binary, e.g.:
+#   command: ["sleep", "3600"]
+# or
+#   command: ["/bin/sh", "-c", "echo 'App started'; sleep 3600"]
+# ============================================================

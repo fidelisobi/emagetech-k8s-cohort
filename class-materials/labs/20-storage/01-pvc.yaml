@@ -1,0 +1,48 @@
+# ============================================================
+# Lab 20 — Persistent Storage
+# File 01: PersistentVolumeClaim
+# ============================================================
+# A PersistentVolumeClaim (PVC) is a request for storage.
+# The StorageClass "standard" on GKE provisions a Google
+# Persistent Disk automatically (dynamic provisioning).
+#
+# Lifecycle:
+#   PVC created → StorageClass provisions a PV → PVC binds to PV
+#   Pod uses PVC → PVC stays bound even if pod is deleted
+#   PVC deleted → PV is released (reclaim policy determines what happens next)
+#
+# Apply:
+#   kubectl create namespace storage-lab
+#   kubectl apply -f 01-pvc.yaml
+# Then check it binds:
+#   kubectl get pvc -n storage-lab
+# ============================================================
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: app-data-pvc
+  namespace: storage-lab
+  labels:
+    lab: "20-storage"
+spec:
+  # accessModes controls how the volume can be mounted.
+  # ReadWriteOnce (RWO): mounted read/write by ONE node at a time.
+  #   → Standard for block storage like GCE Persistent Disk.
+  # ReadOnlyMany  (ROX): mounted read-only by many nodes.
+  # ReadWriteMany (RWX): mounted read/write by many nodes.
+  #   → Requires a network filesystem like Filestore (NFS).
+  accessModes:
+    - ReadWriteOnce
+
+  # storageClassName references a StorageClass that tells
+  # Kubernetes HOW to provision the underlying storage.
+  # "standard" on GKE = ext4-formatted GCE Persistent Disk (HDD).
+  # "standard-rwo" on GKE = CSI-backed PD with RWO enforcement.
+  # "premium-rwo" on GKE = SSD-backed PD.
+  storageClassName: standard
+
+  resources:
+    requests:
+      # Request 1 GiB.  GKE rounds up to the nearest GiB.
+      storage: 1Gi

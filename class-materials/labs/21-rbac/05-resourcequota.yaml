@@ -1,0 +1,61 @@
+# ============================================================
+# Lab 21 — RBAC and Resource Quotas
+# File 05: ResourceQuota
+# ============================================================
+# A ResourceQuota sets hard limits on the total resources that
+# can be consumed within a namespace.
+#
+# If a new object would exceed a quota, the API server rejects
+# the request with a 403 Forbidden error.
+#
+# ResourceQuota types:
+#   - Compute: cpu, memory (limits and requests)
+#   - Object count: pods, services, secrets, configmaps, pvcs, etc.
+#   - Storage: total storage requested by PVCs
+#
+# Apply:
+#   kubectl apply -f 05-resourcequota.yaml
+# ============================================================
+
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: rbac-lab-quota
+  namespace: rbac-lab
+  labels:
+    lab: "21-rbac"
+spec:
+  hard:
+    # --- Object count limits ----------------------------------
+    # Maximum number of pods in this namespace
+    pods: "5"
+
+    # Maximum number of services
+    services: "3"
+
+    # Maximum number of secrets (be careful — tokens count too)
+    secrets: "10"
+
+    # Maximum number of ConfigMaps
+    configmaps: "5"
+
+    # --- Compute resource limits ------------------------------
+    # IMPORTANT: Once a ResourceQuota sets limits on cpu/memory,
+    # ALL pods in the namespace MUST specify requests and limits.
+    # Pods without resource specs will be rejected.
+
+    # Total CPU requests across all pods
+    requests.cpu: "500m"      # 0.5 CPU cores total
+
+    # Total memory requests across all pods
+    requests.memory: "256Mi"
+
+    # Total CPU limits across all pods
+    limits.cpu: "1000m"       # 1 CPU core total
+
+    # Total memory limits across all pods
+    limits.memory: "512Mi"
+
+    # --- Storage limits ---------------------------------------
+    # Total storage requested by all PVCs in this namespace
+    requests.storage: "2Gi"

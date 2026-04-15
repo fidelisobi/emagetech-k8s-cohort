@@ -1,0 +1,55 @@
+# ============================================================
+# Lab 22 — Troubleshooting Scenarios
+# File 02: ImagePullBackOff / ErrImagePull
+# ============================================================
+# SCENARIO: A new deployment is rolled out after an image tag
+# was updated.  All pods show ErrImagePull → ImagePullBackOff.
+#
+# ROOT CAUSE (spoiler — try to find it first!):
+#   The image tag "v99.99.99-nonexistent" does not exist in
+#   Docker Hub.  The kubelet cannot pull the image.
+#   It retries (ErrImagePull), backs off, and shows ImagePullBackOff.
+#
+# DIAGNOSIS COMMANDS:
+#   kubectl describe pod imagepull-pod -n troubleshoot-lab
+#   # Look at Events section — it will show Failed to pull image
+#
+# COMMON CAUSES:
+#   1. Wrong image name or tag (this scenario)
+#   2. Private registry without imagePullSecrets
+#   3. Registry rate limits (Docker Hub unauthenticated)
+#   4. Network policy blocking egress to registry
+#
+# Apply:
+#   kubectl apply -f 02-imagepull-pod.yaml
+# ============================================================
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: imagepull-pod
+  namespace: troubleshoot-lab
+  labels:
+    lab: "22-troubleshooting"
+    scenario: "imagepull"
+spec:
+  restartPolicy: Never   # Don't restart — we want to inspect the failure
+  containers:
+    - name: app
+      # BUG: This tag does not exist on Docker Hub.
+      # The kubelet will fail to pull and report ErrImagePull.
+      image: nginx:v99.99.99-nonexistent
+      ports:
+        - containerPort: 80
+      resources:
+        requests:
+          cpu: "50m"
+          memory: "64Mi"
+        limits:
+          cpu: "100m"
+          memory: "128Mi"
+
+# ============================================================
+# FIX: Change the image to a valid tag, e.g.:
+#   image: nginx:1.25-alpine
+# ============================================================
