@@ -319,25 +319,239 @@ Open-source visualization and analytics platform. The standard dashboarding tool
 
 ---
 
-## OpenTelemetry Overview
+## OpenTelemetry (OTel)
 
-A CNCF project providing a vendor-neutral observability framework. Merges OpenTracing + OpenCensus.
+A **CNCF graduated project** providing a vendor-neutral observability framework. Created by merging two earlier projects — OpenTracing and OpenCensus — into a single standard.
+
+> **Analogy:** OpenTelemetry is like a universal power adapter. Your app speaks one "language" (OTLP), and the adapter (Collector) converts it to whatever plug your destination requires — Prometheus, Jaeger, Datadog, Dynatrace, or any other backend.
 
 **Three Signal Types:** Traces, Metrics, Logs
 
-**Components:**
-- **SDKs** — instrument your application code (auto or manual)
-- **Collector** — receive, process, and export telemetry data
-- **OTLP Protocol** — standard protocol for sending telemetry
+---
 
-**Why it matters:**
-- Instrument once, export to any backend (Prometheus, Jaeger, Datadog, etc.)
-- Avoids vendor lock-in
-- Becoming the standard for cloud-native observability
+## OpenTelemetry - Architecture
+
+```
+┌─────────────────────┐
+│    Your Application  │
+│                      │
+│  OTel SDK            │
+│  (auto or manual     │
+│   instrumentation)   │
+└──────────┬───────────┘
+           │ OTLP (gRPC/HTTP)
+           ▼
+┌─────────────────────────────────────────────┐
+│          OTel Collector                     │
+│                                             │
+│  Receivers ──► Processors ──► Exporters     │
+│  (OTLP,        (batch,        (Prometheus,  │
+│   Jaeger,       filter,        Jaeger,      │
+│   Zipkin)       sample)        OTLP,        │
+│                                Datadog,     │
+│                                Dynatrace,   │
+│                                Cloud Ops)   │
+└─────────────────────────────────────────────┘
+           │                    │
+     ┌─────┘                    └─────┐
+     ▼                                ▼
+┌──────────┐                   ┌──────────────┐
+│Prometheus│                   │ Datadog /    │
+│+ Grafana │                   │ Dynatrace /  │
+│          │                   │ Cloud Ops    │
+└──────────┘                   └──────────────┘
+```
+
+---
+
+## OpenTelemetry - Key Components
+
+**SDKs (Instrumentation):**
+- Available for: Go, Java, Python, Node.js, .NET, Rust, and more
+- **Auto-instrumentation** — inject at runtime, zero code changes (Java agent, Python `opentelemetry-instrument`, K8s OTel Operator)
+- **Manual instrumentation** — add spans, metrics, and log enrichment in your code for custom business logic
+
+**Collector:**
+- A vendor-agnostic proxy that receives, processes, and exports telemetry
+- **Receivers** — accept data (OTLP, Jaeger, Prometheus scrape, Zipkin, etc.)
+- **Processors** — batch, filter, sample, enrich, transform
+- **Exporters** — send to backends (Prometheus, Jaeger, OTLP, Datadog, Dynatrace, Google Cloud, etc.)
+- Deployed as DaemonSet (per-node) or Deployment (cluster-level gateway)
+
+**OTLP (OpenTelemetry Protocol):**
+- The native wire protocol for OTel — supports all three signal types
+- gRPC and HTTP/protobuf transports
+- Increasingly supported as a native ingest format by backends (Grafana, Datadog, Dynatrace, Google Cloud)
+
+---
+
+## OpenTelemetry - Auto-Instrumentation in Kubernetes
+
+The **OpenTelemetry Operator** for Kubernetes can automatically inject instrumentation into pods — no application code changes required.
+
+```yaml
+# Install the OTel Operator
+helm install opentelemetry-operator open-telemetry/opentelemetry-operator
+
+# Create an Instrumentation resource
+apiVersion: opentelemetry.io/v1alpha1
+kind: Instrumentation
+metadata:
+  name: auto-instrumentation
+  namespace: production
+spec:
+  exporter:
+    endpoint: http://otel-collector.observability:4317
+  propagators:
+    - tracecontext
+    - baggage
+  sampler:
+    type: parentbased_traceidratio
+    argument: "0.25"        # sample 25% of traces
+  java:
+    image: ghcr.io/open-telemetry/opentelemetry-operator/autoinstrumentation-java:latest
+  python:
+    image: ghcr.io/open-telemetry/opentelemetry-operator/autoinstrumentation-python:latest
+  nodejs:
+    image: ghcr.io/open-telemetry/opentelemetry-operator/autoinstrumentation-nodejs:latest
+```
+
+**Inject into a Deployment by adding an annotation:**
+```yaml
+metadata:
+  annotations:
+    instrumentation.opentelemetry.io/inject-java: "true"      # for Java apps
+    # instrumentation.opentelemetry.io/inject-python: "true"   # for Python apps
+    # instrumentation.opentelemetry.io/inject-nodejs: "true"   # for Node.js apps
+```
+
+The Operator's mutating webhook injects a sidecar init container that adds the OTel agent to your app at startup — similar to how Istio injects Envoy sidecars.
+
+---
+
+## OpenTelemetry - Distributed Tracing
+
+Traces follow a request as it travels across multiple services — the signal that metrics and logs cannot provide alone.
+
+```
+User request
+     │
+     ▼
+┌─────────────────────────────────────────────────────────────┐
+│  Trace: abc123                                              │
+│                                                             │
+│  ├── Span: API Gateway        (12ms)                        │
+│  │   ├── Span: Auth Service   (3ms)                         │
+│  │   └── Span: Order Service  (8ms)                         │
+│  │       ├── Span: Inventory  (2ms)                         │
+│  │       └── Span: Payment    (5ms)  ◄── bottleneck here    │
+│  └── Total: 12ms                                            │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**Key Concepts:**
+- **Trace** — the full journey of a request across services
+- **Span** — a single operation within a trace (one service, one function call)
+- **Context propagation** — passing trace IDs across service boundaries via HTTP headers (`traceparent`)
+- **Sampling** — controlling what percentage of traces are recorded (100% is expensive at scale)
+
+**Trace Backends:**
+- Jaeger (CNCF graduated) — open-source, self-hosted
+- Grafana Tempo — pairs with Grafana, uses object storage
+- Cloud-native: Google Cloud Trace, AWS X-Ray, Azure Monitor
+
+---
+
+## Observability Platforms - Commercial & Cloud-Native
+
+While Prometheus + Grafana + Loki is the open-source standard, production environments often use managed platforms for scale, correlation, and reduced operational burden.
+
+### Cloud Provider Solutions
+
+| Platform | Provider | Strengths |
+|----------|----------|-----------|
+| **Google Cloud Operations** (Cloud Monitoring + Cloud Logging + Cloud Trace) | GCP | Native GKE integration, auto-collected metrics, Monitoring Query Language (MQL), no agent for GKE system metrics |
+| **Amazon CloudWatch** + **AWS X-Ray** | AWS | Native EKS integration, Container Insights, Embedded Metrics Format, X-Ray for tracing |
+| **Azure Monitor** + **Application Insights** | Azure | Native AKS integration, Container Insights, KQL query language, Application Insights for APM |
+
+### Third-Party Platforms
+
+| Platform | Key Strengths |
+|----------|--------------|
+| **Datadog** | Unified metrics/logs/traces/APM, extensive K8s integration (Datadog Agent DaemonSet), 800+ integrations, AI-powered root cause analysis |
+| **Dynatrace** | Full-stack auto-instrumentation (OneAgent), automatic topology mapping, Davis AI engine for anomaly detection, strong enterprise support |
+| **New Relic** | Full-stack observability, generous free tier, K8s cluster explorer, NRQL query language |
+| **Splunk** (+ SignalFx) | Industry-leading log analytics, real-time streaming metrics, strong compliance/security use cases |
+| **Elastic** (ELK Stack) | Elasticsearch + Kibana for logs, Elastic APM for traces, self-hosted or cloud, powerful full-text search |
+| **Grafana Cloud** | Managed Prometheus, Loki, Tempo, and Grafana — the open-source stack without the operational burden |
+
+---
+
+## Choosing an Observability Strategy
+
+```
+                    Open Source                  Managed / Commercial
+                    ───────────                  ─────────────────────
+Metrics:           Prometheus                   Datadog, Dynatrace, Cloud Monitoring
+Logs:              Grafana Loki                 Splunk, Elastic, Cloud Logging
+Traces:            Jaeger, Tempo                Datadog APM, Dynatrace, Cloud Trace
+Dashboards:        Grafana                      Datadog, Dynatrace, Cloud Console
+Alerting:          Alertmanager                 PagerDuty integration (all platforms)
+```
+
+**Decision Factors:**
+- **Cost** — open-source is free to run but costs engineer time to operate; commercial platforms charge per host/GB/event
+- **Scale** — Prometheus works well to ~10M time series; beyond that, consider Thanos, Cortex, or a managed platform
+- **Correlation** — commercial platforms (Datadog, Dynatrace) correlate metrics + logs + traces in a single pane; open-source requires Grafana with multiple data sources
+- **Compliance** — some industries require specific log retention, audit trails, or data residency that managed platforms handle out of the box
+- **Team size** — small teams benefit from managed platforms; large platform teams can justify operating the open-source stack
+
+**Best Practice:** Regardless of backend, **instrument with OpenTelemetry**. OTel SDKs and the Collector give you the freedom to switch backends without re-instrumenting your applications.
+
+---
+
+## Google Cloud Operations for GKE (Deep Dive)
+
+Since this course uses GKE, here's how Google Cloud's native observability works:
+
+**Auto-collected (no agent needed):**
+- System metrics (CPU, memory, disk, network) for nodes and pods
+- Kubernetes metadata (pod status, container restarts, node conditions)
+- Control plane logs (API server, scheduler, controller manager)
+- Audit logs
+
+**Requires configuration:**
+- Application logs — written to stdout/stderr are automatically collected by the GKE logging agent
+- Custom metrics — expose a Prometheus `/metrics` endpoint; Google Cloud Managed Service for Prometheus scrapes it
+- Custom traces — instrument with OpenTelemetry, export to Cloud Trace
+
+**Google Cloud Managed Service for Prometheus:**
+- Drop-in replacement for self-managed Prometheus
+- Uses the same PromQL, ServiceMonitors, and recording rules
+- Data stored in Google Cloud (Monarch) — scales without managing TSDB
+- Query from Grafana (via the Managed Prometheus data source) or Cloud Monitoring
+
+```bash
+# Enable managed collection on a GKE cluster
+gcloud container clusters update my-cluster \
+  --enable-managed-prometheus \
+  --region us-central1
+```
+
+Your existing `ServiceMonitor` and `PodMonitor` CRDs continue to work — no migration required.
 
 ---
 
 ## Key Takeaways
+
+- Observability has three pillars — metrics, logs, and traces. Each answers a different question. Effective incident response uses all three together: metrics fire the alert, logs explain what happened, traces show where across services.
+- **Prometheus** is the de-facto standard for Kubernetes metrics. It scrapes `/metrics` endpoints on a pull model and stores data in a time-series database queryable with PromQL.
+- **ServiceMonitors** (from the Prometheus Operator) are the GitOps-native way to configure scrape targets — no manual Prometheus config edits required.
+- **OpenTelemetry** is the standard for application instrumentation — instrument once with OTel SDKs, then export to any backend (Prometheus, Jaeger, Datadog, Dynatrace, Cloud Ops). The OTel Operator can auto-instrument Java, Python, and Node.js apps in Kubernetes with zero code changes.
+- **Distributed tracing** is essential for debugging latency in microservice architectures — traces follow a request across service boundaries and reveal which service is the bottleneck.
+- Commercial platforms (Datadog, Dynatrace, Splunk, New Relic) and cloud-native solutions (Google Cloud Operations, CloudWatch, Azure Monitor) provide unified observability with less operational overhead — choose based on cost, scale, and team capacity.
+- **GKE users** get auto-collected system metrics and logs for free, and can use Google Cloud Managed Prometheus for a fully managed PromQL-compatible metrics backend.
+- Regardless of which backend you choose, **instrument with OpenTelemetry** — it's the universal adapter that prevents vendor lock-in.
 
 - Observability has three pillars — metrics, logs, and traces. Each answers a different question. Effective incident response uses all three together: metrics fire the alert, logs explain what happened, traces show where across services.
 - **Prometheus** is the de-facto standard for Kubernetes metrics. It scrapes `/metrics` endpoints on a pull model and stores data in a time-series database queryable with PromQL.
