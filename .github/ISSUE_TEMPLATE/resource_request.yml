@@ -1,0 +1,16 @@
+name: 📚 Resource Request
+description: Request a tutorial, cheat sheet, or additional material
+labels: ["enhancement", "content"]
+body:
+  - type: textarea
+    id: topic
+    attributes:
+      label: What topic do you want covered?
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why would this help you or other students?
+    validations:
+      required: false
