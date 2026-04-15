@@ -147,7 +147,7 @@ Fast-tracking?
 
 - Drop a message in the `#kubernetes-january-2026-cohort` Slack channel
 - Reach out to your Teaching Assistants
-- Contact Kenna directly at kenna.ofoegbu@gmail.com
+- Contact Kenna directly at admin@emagegroup.net
 
 ---
 
