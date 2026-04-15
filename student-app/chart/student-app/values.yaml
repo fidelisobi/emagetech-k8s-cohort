@@ -1,0 +1,158 @@
+# =============================================================================
+# values.yaml — default values for the student-app chart
+#
+# K8S CONCEPT: Helm values
+# All the Kubernetes-specific knobs are here.  Override individual values
+# with --set flags or with a separate values file (e.g. values-dev.yaml).
+# =============================================================================
+
+# ---------------------------------------------------------------------------
+# Global settings
+# ---------------------------------------------------------------------------
+global:
+  imageRegistry: ""   # override to use a private registry, e.g. "my-registry.io"
+
+# ---------------------------------------------------------------------------
+# API service
+# ---------------------------------------------------------------------------
+api:
+  # K8S CONCEPT: Image + tag
+  # The tag is kept separate so you can bump it without touching the registry.
+  image:
+    repository: student-app-api
+    tag: "1.0.0"
+    pullPolicy: IfNotPresent   # Always | Never | IfNotPresent
+
+  # Number of API pod replicas.
+  # K8S CONCEPT: HPA will override this value when autoscaling is enabled.
+  replicaCount: 2
+
+  # K8S CONCEPT: Resource requests & limits
+  # requests: what the scheduler uses to find a node with enough capacity
+  # limits:   the hard ceiling — the container is killed if it exceeds memory
+  resources:
+    requests:
+      cpu: "100m"       # 100 millicores = 0.1 CPU
+      memory: "128Mi"
+    limits:
+      cpu: "500m"
+      memory: "256Mi"
+
+  # K8S CONCEPT: Liveness probe
+  # The kubelet restarts the container if this fails consecutively.
+  # Use a lightweight endpoint that only checks if the process is alive.
+  livenessProbe:
+    httpGet:
+      path: /health
+      port: 5000
+    initialDelaySeconds: 10   # wait before first probe (app startup time)
+    periodSeconds: 15
+    failureThreshold: 3
+
+  # K8S CONCEPT: Readiness probe
+  # The pod is removed from Service endpoints while this fails.
+  # Use this to check external dependencies (database, cache, etc.)
+  readinessProbe:
+    httpGet:
+      path: /ready
+      port: 5000
+    initialDelaySeconds: 5
+    periodSeconds: 10
+    failureThreshold: 3
+
+  # K8S CONCEPT: Service
+  service:
+    type: ClusterIP   # internal-only; the frontend proxies to it
+    port: 80
+    targetPort: 5000
+
+  # Non-sensitive configuration (goes into a ConfigMap)
+  config:
+    appName: "student-app"
+    appVersion: "1.0.0"
+    dbName: "studentdb"
+    dbPort: "5432"
+
+  # Sensitive configuration (goes into a Secret)
+  # In production, use Sealed Secrets / External Secrets Operator instead
+  # of storing passwords in values.yaml.
+  secret:
+    dbUser: "student"
+    dbPassword: "changeme"   # CHANGE THIS before going to production
+
+# ---------------------------------------------------------------------------
+# Frontend service
+# ---------------------------------------------------------------------------
+frontend:
+  image:
+    repository: student-app-frontend
+    tag: "1.0.0"
+    pullPolicy: IfNotPresent
+
+  replicaCount: 1
+
+  resources:
+    requests:
+      cpu: "50m"
+      memory: "64Mi"
+    limits:
+      cpu: "200m"
+      memory: "128Mi"
+
+  # K8S CONCEPT: Service type
+  # ClusterIP = internal only.  Change to LoadBalancer or use an Ingress
+  # to expose the frontend to the internet.
+  service:
+    type: ClusterIP
+    port: 80
+    targetPort: 80
+
+# ---------------------------------------------------------------------------
+# K8S CONCEPT: HPA (Horizontal Pod Autoscaler)
+# Automatically scales the API Deployment between min and max replicas
+# based on CPU utilisation.  Requires the metrics-server addon.
+# ---------------------------------------------------------------------------
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 70   # scale up when CPU > 70%
+
+# ---------------------------------------------------------------------------
+# K8S CONCEPT: ServiceMonitor (Prometheus Operator)
+# Tells Prometheus where to scrape metrics from the API pods.
+# Requires the Prometheus Operator CRDs to be installed in the cluster.
+# ---------------------------------------------------------------------------
+serviceMonitor:
+  enabled: false          # set to true when Prometheus Operator is available
+  interval: "30s"         # how often Prometheus scrapes
+  scrapeTimeout: "10s"
+  labels: {}              # extra labels to match your Prometheus selector
+
+# ---------------------------------------------------------------------------
+# PostgreSQL sub-chart (bitnami/postgresql)
+# Run "helm dependency update chart/student-app" to fetch the chart.
+# ---------------------------------------------------------------------------
+postgresql:
+  enabled: true           # set to false to use an external database
+
+  auth:
+    database: studentdb
+    username: student
+    password: changeme    # CHANGE THIS
+
+  primary:
+    resources:
+      requests:
+        cpu: "100m"
+        memory: "256Mi"
+      limits:
+        cpu: "500m"
+        memory: "512Mi"
+
+    # K8S CONCEPT: PersistentVolumeClaim
+    # Data survives pod restarts.  The StorageClass determines how the
+    # volume is provisioned (e.g. standard SSD on GKE, gp3 on EKS).
+    persistence:
+      enabled: true
+      size: 1Gi

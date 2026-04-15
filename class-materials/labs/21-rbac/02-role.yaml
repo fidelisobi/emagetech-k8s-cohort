@@ -1,0 +1,53 @@
+# ============================================================
+# Lab 21 — RBAC and Resource Quotas
+# File 02: Role
+# ============================================================
+# A Role grants permissions WITHIN a single namespace.
+# (Use ClusterRole for cluster-scoped resources or cross-namespace access.)
+#
+# Kubernetes RBAC is additive only — there are no deny rules.
+# If a subject has no grant for an action, it is implicitly denied.
+#
+# This Role grants read-only access (get, list, watch) to pods
+# and services in the rbac-lab namespace.
+#
+# Apply:
+#   kubectl apply -f 02-role.yaml
+# ============================================================
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: pod-reader
+  namespace: rbac-lab          # Role is scoped to this namespace only
+  labels:
+    lab: "21-rbac"
+rules:
+  # Each rule grants verbs on a set of resources in an API group.
+
+  # --- Rule 1: read pods ----------------------------------
+  - apiGroups:
+      - ""                     # "" (empty string) = core API group
+                               # covers: pods, services, configmaps, secrets, etc.
+    resources:
+      - pods                   # the resource type
+      - pods/log               # sub-resource: allows `kubectl logs`
+    verbs:
+      - get                    # kubectl get pod <name>
+      - list                   # kubectl get pods
+      - watch                  # kubectl get pods -w (watch stream)
+
+  # --- Rule 2: read services -------------------------------
+  - apiGroups:
+      - ""
+    resources:
+      - services
+    verbs:
+      - get
+      - list
+      - watch
+
+  # NOTE: This Role does NOT grant:
+  #   - create, update, patch, delete on any resource
+  #   - access to secrets, configmaps, deployments, etc.
+  # Those actions will be denied when we test in Step 4.

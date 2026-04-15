@@ -1,0 +1,49 @@
+# ============================================================
+# Lab 21 — RBAC and Resource Quotas
+# File 04: Test Pod
+# ============================================================
+# This pod runs as the dev-user ServiceAccount.  We exec into
+# it and use kubectl (backed by the auto-mounted ServiceAccount
+# token) to test which operations are allowed and denied.
+#
+# The bitnami/kubectl image provides the kubectl binary.
+# The ServiceAccount token is automatically mounted at:
+#   /var/run/secrets/kubernetes.io/serviceaccount/token
+# kubectl picks this up automatically.
+#
+# Apply:
+#   kubectl apply -f 04-test-pod.yaml
+# ============================================================
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: rbac-test-pod
+  namespace: rbac-lab
+  labels:
+    lab: "21-rbac"
+    role: tester
+spec:
+  # Run as the dev-user ServiceAccount — all API calls from this
+  # pod will be authenticated as that ServiceAccount.
+  serviceAccountName: dev-user
+
+  restartPolicy: Never
+
+  containers:
+    - name: kubectl-tester
+      # bitnami/kubectl provides kubectl without needing curl + manual setup
+      image: bitnami/kubectl:1.29
+      # Keep the pod alive so we can exec into it
+      command: ["sleep", "3600"]
+      resources:
+        requests:
+          cpu: "50m"
+          memory: "64Mi"
+        limits:
+          cpu: "100m"
+          memory: "128Mi"
+      env:
+        # Tell kubectl which namespace to default to
+        - name: HOME
+          value: "/tmp"    # bitnami/kubectl runs as non-root; /tmp is writable

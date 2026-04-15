@@ -1,0 +1,41 @@
+# ============================================================
+# Lab 15 — ConfigMaps, Secrets, and the Downward API
+# File 01: ConfigMap
+# ============================================================
+# A ConfigMap stores non-sensitive configuration as key-value
+# pairs. Values can be consumed by pods as environment variables
+# or as files mounted into the container filesystem.
+#
+# Apply:
+#   kubectl apply -f 01-configmap.yaml
+# ============================================================
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  namespace: cm-secrets-lab
+  labels:
+    lab: "15-configmaps-secrets"
+data:
+  # --- Flat key-value pairs -----------------------------------
+  # These can be injected individually via valueFrom.configMapKeyRef
+  # or all at once via envFrom.configMapRef.
+  LOG_LEVEL: "info"
+  DB_HOST: "postgres.cm-secrets-lab.svc.cluster.local"
+  DB_PORT: "5432"
+  APP_ENV: "training"
+
+  # --- Multi-line file content --------------------------------
+  # When mounted as a volume, this key becomes a file named
+  # "app.properties" inside the container.  The | character
+  # preserves newlines (YAML literal block scalar).
+  app.properties: |
+    # Application configuration file
+    # Mounted at /etc/config/app.properties inside the pod
+    server.port=8080
+    server.host=0.0.0.0
+    feature.dark-mode=true
+    feature.beta-api=false
+    cache.ttl-seconds=300
+    log.level=${LOG_LEVEL}

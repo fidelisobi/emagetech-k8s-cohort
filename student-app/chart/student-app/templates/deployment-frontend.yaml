@@ -1,0 +1,65 @@
+# =============================================================================
+# K8S CONCEPT: Deployment — Frontend
+#
+# A second independent Deployment for the Nginx frontend.
+# Key teaching points:
+#   - Each tier scales independently
+#   - Frontend can be updated without touching the API
+#   - The two pods communicate via a ClusterIP Service (not pod IPs)
+# =============================================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "student-app.fullname" . }}-frontend
+  labels:
+    {{- include "student-app.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.frontend.replicaCount }}
+
+  selector:
+    matchLabels:
+      {{- include "student-app.frontend.selectorLabels" . | nindent 6 }}
+
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0   # never take all replicas down during an update
+      maxSurge: 1
+
+  template:
+    metadata:
+      labels:
+        {{- include "student-app.frontend.selectorLabels" . | nindent 8 }}
+        {{- include "student-app.labels" . | nindent 8 }}
+    spec:
+      containers:
+        - name: frontend
+          image: "{{ .Values.frontend.image.repository }}:{{ .Values.frontend.image.tag }}"
+          imagePullPolicy: {{ .Values.frontend.image.pullPolicy }}
+
+          ports:
+            - name: http
+              containerPort: 80
+              protocol: TCP
+
+          # K8S CONCEPT: Liveness probe for Nginx
+          # A simple HTTP check against the /nginx-health location defined
+          # in nginx.conf.
+          livenessProbe:
+            httpGet:
+              path: /nginx-health
+              port: 80
+            initialDelaySeconds: 5
+            periodSeconds: 15
+            failureThreshold: 3
+
+          readinessProbe:
+            httpGet:
+              path: /nginx-health
+              port: 80
+            initialDelaySeconds: 3
+            periodSeconds: 10
+            failureThreshold: 3
+
+          resources:
+            {{- toYaml .Values.frontend.resources | nindent 12 }}

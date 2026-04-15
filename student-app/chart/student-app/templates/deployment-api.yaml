@@ -1,0 +1,147 @@
+# =============================================================================
+# K8S CONCEPT: Deployment
+#
+# A Deployment declares the *desired* state for a set of identical pods.
+# Kubernetes continually reconciles actual state towards desired state.
+#
+# Key fields to understand:
+#   spec.replicas         — how many pods to run
+#   spec.selector         — how the Deployment finds "its" pods
+#   spec.template         — the pod blueprint (containers, volumes, etc.)
+#   spec.strategy         — RollingUpdate (default) or Recreate
+# =============================================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "student-app.fullname" . }}-api
+  labels:
+    {{- include "student-app.labels" . | nindent 4 }}
+spec:
+  # K8S CONCEPT: Replicas
+  # HPA will override this when autoscaling is enabled.
+  # Avoid setting replicas in the manifest when HPA is active — let HPA own it.
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.api.replicaCount }}
+  {{- end }}
+
+  # K8S CONCEPT: Label selector
+  # The Deployment uses this selector to know which pods belong to it.
+  # Must match the labels on the pod template below.
+  selector:
+    matchLabels:
+      {{- include "student-app.api.selectorLabels" . | nindent 6 }}
+
+  # K8S CONCEPT: Rolling update strategy
+  # maxUnavailable: how many pods can be down during an update
+  # maxSurge:       how many extra pods can be created during an update
+  # Together they ensure zero-downtime deployments.
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+
+  template:
+    metadata:
+      labels:
+        {{- include "student-app.api.selectorLabels" . | nindent 8 }}
+        {{- include "student-app.labels" . | nindent 8 }}
+      # K8S CONCEPT: Pod annotations for Prometheus scraping
+      # When a ServiceMonitor is not available, Prometheus can use these
+      # annotations to auto-discover scrape targets.
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port:   "5000"
+        prometheus.io/path:   "/metrics"
+    spec:
+      # K8S CONCEPT: Security context (pod level)
+      # runAsNonRoot enforces that the container process does not run as root.
+      # Aligns with PodSecurityAdmission "restricted" profile.
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        runAsGroup: 1001
+        fsGroup: 1001
+
+      containers:
+        - name: api
+          image: "{{ .Values.api.image.repository }}:{{ .Values.api.image.tag }}"
+          imagePullPolicy: {{ .Values.api.image.pullPolicy }}
+
+          ports:
+            - name: http
+              containerPort: 5000
+              protocol: TCP
+
+          # ----------------------------------------------------------------
+          # K8S CONCEPT: Environment variables from ConfigMap and Secret
+          # envFrom loads ALL keys from the ConfigMap/Secret as env vars.
+          # This is the recommended pattern — no need to list each key.
+          # ----------------------------------------------------------------
+          envFrom:
+            - configMapRef:
+                name: {{ include "student-app.fullname" . }}-config
+            - secretRef:
+                name: {{ include "student-app.fullname" . }}-secret
+
+          # ----------------------------------------------------------------
+          # K8S CONCEPT: Downward API
+          # Exposes pod/node metadata to the container as environment
+          # variables.  The app reads these to show which pod served a
+          # request — great for demonstrating load balancing.
+          # ----------------------------------------------------------------
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+
+          # ----------------------------------------------------------------
+          # K8S CONCEPT: Liveness probe
+          # If /health returns non-200 three times in a row, the kubelet
+          # kills and restarts the container.
+          # ----------------------------------------------------------------
+          livenessProbe:
+            {{- toYaml .Values.api.livenessProbe | nindent 12 }}
+
+          # ----------------------------------------------------------------
+          # K8S CONCEPT: Readiness probe
+          # If /ready returns non-200 the pod is removed from the Service
+          # endpoints — traffic stops flowing to it until it recovers.
+          # ----------------------------------------------------------------
+          readinessProbe:
+            {{- toYaml .Values.api.readinessProbe | nindent 12 }}
+
+          # ----------------------------------------------------------------
+          # K8S CONCEPT: Resource requests & limits
+          # requests: used by the scheduler to place pods on suitable nodes
+          # limits:   enforced by cgroups — OOMKilled if memory exceeded
+          # ----------------------------------------------------------------
+          resources:
+            {{- toYaml .Values.api.resources | nindent 12 }}
+
+          # K8S CONCEPT: Container security context
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+
+          # /tmp is needed by gunicorn for worker temp files
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+
+      # Volumes backing the mounts above
+      volumes:
+        - name: tmp
+          emptyDir: {}

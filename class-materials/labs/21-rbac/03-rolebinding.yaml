@@ -1,0 +1,42 @@
+# ============================================================
+# Lab 21 — RBAC and Resource Quotas
+# File 03: RoleBinding
+# ============================================================
+# A RoleBinding grants the permissions defined in a Role to
+# one or more subjects (ServiceAccounts, Users, or Groups)
+# within the same namespace.
+#
+# subjects can be:
+#   - kind: ServiceAccount   (pod identity)
+#   - kind: User             (human user, usually mapped from OIDC/Google account)
+#   - kind: Group            (group of users)
+#
+# Apply:
+#   kubectl apply -f 03-rolebinding.yaml
+# ============================================================
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: dev-user-pod-reader
+  namespace: rbac-lab            # RoleBinding is scoped to this namespace
+  labels:
+    lab: "21-rbac"
+# roleRef: the Role (or ClusterRole) to bind.
+# This field is IMMUTABLE after creation — you cannot change it.
+# To change permissions, delete and recreate the RoleBinding.
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role                     # Role (namespace-scoped) or ClusterRole
+  name: pod-reader               # must match the Role metadata.name
+
+# subjects: who receives the permissions.
+# A RoleBinding can have multiple subjects.
+subjects:
+  - kind: ServiceAccount
+    name: dev-user               # must match the ServiceAccount metadata.name
+    namespace: rbac-lab          # required for ServiceAccount subjects
+    # For a human user:
+    # - kind: User
+    #   name: jane@example.com
+    #   apiGroup: rbac.authorization.k8s.io

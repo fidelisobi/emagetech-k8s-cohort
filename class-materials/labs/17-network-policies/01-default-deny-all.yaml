@@ -1,0 +1,45 @@
+# ============================================================
+# Lab 17 — Network Policies: Step 1 — Default Deny All
+# ============================================================
+# A "default deny" policy is the foundation of zero-trust
+# networking in Kubernetes.
+#
+# HOW IT WORKS
+# ------------
+# A NetworkPolicy selects pods via `podSelector`. An empty
+# podSelector ({}) matches EVERY pod in the namespace.
+#
+# The `policyTypes` list tells Kubernetes which traffic
+# directions this policy governs:
+#   - Ingress: traffic flowing INTO selected pods
+#   - Egress:  traffic flowing OUT OF selected pods
+#
+# When a policy lists a type (e.g. Ingress) but provides NO
+# corresponding rules, Kubernetes blocks ALL traffic of that
+# type.  This is the mechanism that creates a "deny all".
+#
+# Apply:
+#   kubectl apply -f 01-default-deny-all.yaml
+#
+# Verify — this should now TIME OUT (connection blocked):
+#   FRONTEND=$(kubectl get pod -n netpol-lab -l app=frontend -o name | head -1)
+#   kubectl exec -n netpol-lab $FRONTEND -- curl -s --max-time 3 http://backend-svc:8080
+# ============================================================
+
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-all          # descriptive name — will appear in `kubectl get netpol`
+  namespace: netpol-lab           # policy is namespace-scoped
+spec:
+  # podSelector: {} means "select ALL pods in this namespace"
+  podSelector: {}
+
+  # List the traffic directions this policy governs.
+  # Because we list both types but provide no rules,
+  # Kubernetes will block ALL ingress AND egress for every pod.
+  policyTypes:
+    - Ingress   # deny all inbound traffic
+    - Egress    # deny all outbound traffic
+  # --- No `ingress:` or `egress:` rules listed ---
+  # The absence of rules is what causes the deny.

@@ -1,0 +1,113 @@
+# ============================================================
+# Lab 28 — Policy: Kyverno — Disallow :latest Image Tag
+# ============================================================
+# Using the `latest` tag on container images is a bad practice:
+#   - "latest" is mutable — it can point to different images
+#     at different times, making deployments non-deterministic
+#   - No version pinning means you lose rollback capability
+#   - Security scanners cannot track which specific image is running
+#
+# This policy blocks any container that uses an image with:
+#   - The `:latest` tag explicitly (e.g. nginx:latest)
+#   - NO tag at all (e.g. just `nginx` — which defaults to latest)
+#
+# Apply:
+#   kubectl apply -f 03-kyverno-disallow-latest.yaml
+#
+# Test — should FAIL (:latest tag):
+#   kubectl run latest-pod --image=nginx:latest \
+#     --labels="app=test,team=lab" -n default
+#
+# Test — should FAIL (no tag):
+#   kubectl run no-tag-pod --image=nginx \
+#     --labels="app=test,team=lab" -n default
+#
+# Test — should PASS (pinned tag):
+#   kubectl run pinned-pod --image=nginx:1.25.3 \
+#     --labels="app=test,team=lab" -n default
+#
+# Test — should PASS (digest):
+#   kubectl run digest-pod \
+#     --image=nginx@sha256:abc123... \
+#     --labels="app=test,team=lab" -n default
+# ============================================================
+
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: disallow-latest-tag
+  annotations:
+    policies.kyverno.io/title: "Disallow :latest Image Tag"
+    policies.kyverno.io/category: "Best Practices, Supply Chain Security"
+    policies.kyverno.io/severity: "high"
+    policies.kyverno.io/description: >-
+      Container images must use a specific version tag or digest.
+      The :latest tag and untagged images are not allowed because
+      they are mutable and make deployments non-reproducible.
+spec:
+  validationFailureAction: Enforce
+  background: true
+
+  rules:
+    - name: check-image-tag
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+
+      exclude:
+        any:
+          - resources:
+              namespaces:
+                - kube-system
+                - kube-public
+                - kube-node-lease
+                - kyverno
+                - istio-system
+                - cert-manager
+
+      validate:
+        message: >-
+          Container image must use a specific version tag (not :latest) or a digest.
+          Bad:  nginx          (implicitly latest)
+          Bad:  nginx:latest   (explicitly latest)
+          Good: nginx:1.25.3   (pinned version)
+          Good: nginx@sha256:abc123...  (pinned digest)
+
+        # foreach: check every container in the pod
+        foreach:
+          - list: "request.object.spec.containers"
+            deny:
+              conditions:
+                any:
+                  # Condition 1: image ends with ":latest"
+                  - key: "{{ element.image }}"
+                    operator: Equals
+                    value: "*:latest"
+
+                  # Condition 2: image has NO tag and NO digest
+                  # Images without a tag default to "latest" at pull time.
+                  # An image with a digest contains "@" (e.g. nginx@sha256:...)
+                  # An image with a version tag contains ":" (e.g. nginx:1.25)
+                  # If neither ":" nor "@" is present, it's untagged.
+                  - key: "{{ element.image | contains(@, ':') || contains(@, '@') }}"
+                    operator: Equals
+                    value: false
+
+          # Also check initContainers
+          - list: "request.object.spec.initContainers"
+            preconditions:
+              any:
+                - key: "{{ request.object.spec.initContainers[] | length(@) }}"
+                  operator: GreaterThanOrEquals
+                  value: "1"
+            deny:
+              conditions:
+                any:
+                  - key: "{{ element.image }}"
+                    operator: Equals
+                    value: "*:latest"
+                  - key: "{{ element.image | contains(@, ':') || contains(@, '@') }}"
+                    operator: Equals
+                    value: false

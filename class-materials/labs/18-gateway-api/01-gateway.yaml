@@ -1,0 +1,87 @@
+# ============================================================
+# Lab 18 — Gateway API: Step 1 — GatewayClass + Gateway
+# ============================================================
+# The Gateway API is the next-generation Kubernetes ingress
+# standard. It replaces the legacy Ingress resource with a
+# richer, role-oriented model:
+#
+#   Infrastructure team  → manages GatewayClass + Gateway
+#   App team             → manages HTTPRoute / GRPCRoute
+#
+# RESOURCE HIERARCHY
+# ------------------
+#   GatewayClass  (cluster-scoped)
+#       └── Gateway  (namespace-scoped)
+#               └── HTTPRoute  (namespace-scoped)
+#
+# In this lab, Istio acts as the Gateway controller.
+# The GatewayClass tells Kubernetes which controller handles
+# Gateways of this class.
+#
+# Prerequisites:
+#   Istio must be installed on the cluster.
+#   kubectl get gatewayclass  # should show istio
+#
+# Apply:
+#   kubectl apply -f 01-gateway.yaml
+# ============================================================
+
+# --- GatewayClass --------------------------------------------
+# A GatewayClass is cluster-scoped (no namespace).
+# It identifies the controller that will implement Gateways
+# belonging to this class.
+apiVersion: gateway.networking.k8s.io/v1
+kind: GatewayClass
+metadata:
+  name: istio                   # name referenced by Gateway.spec.gatewayClassName
+spec:
+  # controllerName must match the value the controller publishes.
+  # Istio uses "istio.io/gateway-controller".
+  controllerName: istio.io/gateway-controller
+  description: "Istio-managed gateways for the GKE training cluster"
+
+---
+# --- Gateway -------------------------------------------------
+# A Gateway is the actual load balancer / proxy instance.
+# It is namespace-scoped and owned by the platform/infra team.
+#
+# This Gateway listens on port 80 (HTTP) and 443 (HTTPS) and
+# allows HTTPRoutes from ANY namespace to attach to it.
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: shared-gateway          # HTTPRoutes reference this name
+  namespace: gateway-lab        # namespace where the Gateway lives
+  annotations:
+    # Istio-specific: request a dedicated external LoadBalancer IP
+    networking.istio.io/service-type: LoadBalancer
+spec:
+  # Reference the GatewayClass defined above
+  gatewayClassName: istio
+
+  listeners:
+    # --- HTTP listener on port 80 ----------------------------
+    - name: http
+      protocol: HTTP            # unencrypted HTTP
+      port: 80
+      # allowedRoutes controls which HTTPRoutes can attach here.
+      # "All" means routes from any namespace may bind to this listener.
+      allowedRoutes:
+        namespaces:
+          from: All             # change to "Same" to restrict to this namespace only
+
+    # --- HTTPS listener on port 443 --------------------------
+    - name: https
+      protocol: HTTPS
+      port: 443
+      # TLS termination at the Gateway (passthrough would be "Passthrough" mode)
+      tls:
+        mode: Terminate         # Gateway decrypts; backend receives plain HTTP
+        certificateRefs:
+          # Secret must exist in the same namespace as the Gateway.
+          # Created by cert-manager in Lab 19.
+          - name: shared-gateway-tls
+            kind: Secret
+      allowedRoutes:
+        namespaces:
+          from: All

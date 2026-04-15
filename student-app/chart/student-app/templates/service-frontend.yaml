@@ -1,0 +1,27 @@
+# =============================================================================
+# K8S CONCEPT: Service (Frontend)
+#
+# In the default values this is also ClusterIP — students will change the type
+# to LoadBalancer (or add an Ingress) to expose the app to the internet.
+#
+# Lab exercise:
+#   kubectl patch svc student-app-frontend -p '{"spec":{"type":"LoadBalancer"}}'
+#   kubectl get svc -w   # watch for the EXTERNAL-IP to appear
+# =============================================================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "student-app.fullname" . }}-frontend
+  labels:
+    {{- include "student-app.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.frontend.service.type }}
+
+  selector:
+    {{- include "student-app.frontend.selectorLabels" . | nindent 4 }}
+
+  ports:
+    - name: http
+      protocol: TCP
+      port: {{ .Values.frontend.service.port }}
+      targetPort: {{ .Values.frontend.service.targetPort }}

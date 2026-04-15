@@ -1,0 +1,89 @@
+# ============================================================
+# Lab 22 — Troubleshooting Scenarios
+# File 04: Misconfigured Service (Selector Mismatch)
+# ============================================================
+# SCENARIO: The app is deployed and pods are Running, but the
+# Service has no endpoints — requests return "connection refused"
+# or "no endpoints available".
+#
+# ROOT CAUSE (spoiler — try to find it first!):
+#   The Deployment pods have label  app: web-backend
+#   The Service selector looks for  app: web-server   ← WRONG
+#   Because no pods match the selector, the Service has zero
+#   endpoints and all traffic fails.
+#
+# DIAGNOSIS COMMANDS:
+#   kubectl get endpoints web-svc -n troubleshoot-lab
+#   # Expected broken output: ENDPOINTS = <none>
+#
+#   kubectl describe service web-svc -n troubleshoot-lab
+#   # Look at Endpoints: <none>
+#
+#   kubectl get pods -n troubleshoot-lab --show-labels
+#   # Compare pod labels to the Service selector
+#
+# Apply:
+#   kubectl apply -f 04-misconfigured-service.yaml
+# ============================================================
+
+# --- Deployment ----------------------------------------------
+# Note the pod label:  app: web-backend
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-backend
+  namespace: troubleshoot-lab
+  labels:
+    lab: "22-troubleshooting"
+    scenario: "selector-mismatch"
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: web-backend     # Deployment selects pods with this label
+  template:
+    metadata:
+      labels:
+        app: web-backend   # Pods have THIS label
+    spec:
+      containers:
+        - name: web
+          image: nginx:1.25-alpine
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "64Mi"
+            limits:
+              cpu: "100m"
+              memory: "128Mi"
+
+---
+# --- Service -------------------------------------------------
+# BUG: The selector uses  app: web-server  but pods are labeled
+#      app: web-backend  — these do NOT match.
+apiVersion: v1
+kind: Service
+metadata:
+  name: web-svc
+  namespace: troubleshoot-lab
+  labels:
+    lab: "22-troubleshooting"
+    scenario: "selector-mismatch"
+spec:
+  # BUG is here: selector value "web-server" does not match
+  # any pod label ("web-backend")
+  selector:
+    app: web-server        # ← WRONG: should be web-backend
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80
+  type: ClusterIP
+
+# ============================================================
+# FIX: Change the Service selector to match the pod label:
+#   selector:
+#     app: web-backend
+# ============================================================

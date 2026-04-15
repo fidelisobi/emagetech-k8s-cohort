@@ -1,0 +1,73 @@
+# ============================================================
+# Lab 16 — Pod Controllers
+# File 03: Job
+# ============================================================
+# A Job creates one or more pods and ensures a specified number
+# of them successfully complete.  Unlike Deployments, Job pods
+# are expected to terminate (exit 0).
+#
+# Key fields:
+#   completions:  total number of successful pod completions required
+#   parallelism:  maximum pods running at the same time
+#   backoffLimit: retry limit before the Job is marked Failed
+#
+# With completions: 5 and parallelism: 2, Kubernetes will run
+# at most 2 pods at once until 5 have succeeded.
+#
+# Apply:
+#   kubectl apply -f 03-job.yaml
+# ============================================================
+
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: batch-processor
+  namespace: controllers-lab
+  labels:
+    lab: "16-pod-controllers"
+spec:
+  # Total number of pods that must complete successfully
+  completions: 5
+
+  # Maximum pods running concurrently
+  parallelism: 2
+
+  # How many times to retry a failed pod before giving up on the whole Job
+  backoffLimit: 3
+
+  # Automatically delete the Job (and its pods) 120s after it finishes.
+  # Without this, completed jobs accumulate and consume etcd space.
+  ttlSecondsAfterFinished: 120
+
+  template:
+    metadata:
+      labels:
+        app: batch-processor
+        job-type: lab-demo
+    spec:
+      # restartPolicy must be Never or OnFailure for Job pods.
+      # Never → a failed pod is NOT restarted; the Job creates a new one
+      #          until backoffLimit is reached.
+      # OnFailure → the same pod is restarted in place.
+      restartPolicy: Never
+      containers:
+        - name: worker
+          image: busybox:1.36
+          # Simulate work: print a message, sleep briefly, then exit 0.
+          # The JOB_COMPLETION_INDEX env var is automatically injected
+          # by Kubernetes (indexed Job mode, available since 1.21).
+          command: ["sh", "-c"]
+          args:
+            - |
+              echo "Job worker starting. Index: ${JOB_COMPLETION_INDEX:-N/A}"
+              echo "Hostname: $(hostname)"
+              echo "Simulating work for 5 seconds..."
+              sleep 5
+              echo "Work complete. Exiting successfully."
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "32Mi"
+            limits:
+              cpu: "100m"
+              memory: "64Mi"

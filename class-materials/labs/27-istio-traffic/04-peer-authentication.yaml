@@ -1,0 +1,81 @@
+# ============================================================
+# Lab 27 — Istio Traffic Management: Step 4 — mTLS (STRICT)
+# ============================================================
+# PeerAuthentication configures mutual TLS (mTLS) between
+# services. With mTLS, both client and server authenticate
+# each other using X.509 certificates managed by Istio.
+#
+# TWO MODES
+# ---------
+#   PERMISSIVE: accepts both plaintext AND mTLS connections.
+#               (default — used during migration)
+#   STRICT:     ONLY accepts mTLS connections.
+#               Plaintext is rejected with a connection error.
+#
+# STRICT mode should be the target for production workloads.
+# It ensures all traffic in the namespace is encrypted and
+# authenticated — no service can impersonate another.
+#
+# Apply:
+#   kubectl apply -f 04-peer-authentication.yaml
+#
+# Verify mTLS is active:
+#   istioctl x describe pod \
+#     $(kubectl get pod -n bookinfo -l app=productpage -o name | head -1 | cut -d/ -f2) \
+#     -n bookinfo
+#
+# Confirm that non-sidecar traffic is rejected:
+#   # Create a pod WITHOUT a sidecar in another namespace
+#   kubectl run test --image=curlimages/curl --restart=Never -- sleep 3600
+#   kubectl exec test -- curl -s http://productpage.bookinfo:9080/productpage
+#   # Expected: connection refused (no sidecar = no client cert)
+#   kubectl delete pod test
+# ============================================================
+
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: bookinfo-strict-mtls
+  namespace: bookinfo         # applies to ALL services in this namespace
+spec:
+  # selector: if omitted, policy applies to all pods in the namespace.
+  # To target specific pods, add a selector:
+  # selector:
+  #   matchLabels:
+  #     app: productpage
+  #
+  # A namespace-wide policy (no selector) is the recommended approach.
+
+  mtls:
+    # STRICT: reject any connection that is NOT mTLS.
+    # The Envoy sidecar will refuse plaintext connections.
+    mode: STRICT
+
+# ============================================================
+# MESH-WIDE POLICY (optional)
+# ----------------------------
+# To enforce STRICT mTLS across the ENTIRE mesh:
+#
+# apiVersion: security.istio.io/v1beta1
+# kind: PeerAuthentication
+# metadata:
+#   name: mesh-wide-strict-mtls
+#   namespace: istio-system    # istio-system = mesh-wide scope
+# spec:
+#   mtls:
+#     mode: STRICT
+# ============================================================
+
+# ============================================================
+# PORT-LEVEL OVERRIDE
+# ----------------------------
+# To use STRICT globally but PERMISSIVE on one specific port
+# (e.g. for a health check endpoint):
+#
+# spec:
+#   mtls:
+#     mode: STRICT
+#   portLevelMtls:
+#     9080:
+#       mode: PERMISSIVE
+# ============================================================

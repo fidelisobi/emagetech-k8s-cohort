@@ -1,0 +1,95 @@
+# ============================================================
+# Lab 19 — Platform Addons: Step 3 — Ingress with TLS
+# ============================================================
+# This Ingress resource uses the cert-manager annotation to
+# automatically trigger certificate issuance. You do NOT need
+# to pre-create the Certificate resource (step 2) — the
+# annotation tells cert-manager to create it for you.
+#
+# TWO APPROACHES (use one or the other, not both):
+#   A) Pre-create Certificate (02-certificate.yaml) → reference Secret in Ingress
+#   B) Use the annotation below → cert-manager auto-creates Certificate
+#
+# This file demonstrates approach B (annotation-based).
+#
+# Apply:
+#   kubectl apply -f 03-ingress-with-tls.yaml
+#
+# Watch certificate issuance:
+#   kubectl describe ingress lab-ingress -n gateway-lab
+#   kubectl get certificate -n gateway-lab
+#
+# Test HTTPS (staging cert is NOT browser-trusted, use -k):
+#   curl -k https://lab.cluster-dreams.example.com/api/health
+# ============================================================
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: lab-ingress
+  namespace: gateway-lab
+  annotations:
+    # --- cert-manager annotation ----------------------------
+    # This annotation triggers cert-manager to automatically
+    # create a Certificate resource for the TLS hosts listed
+    # in spec.tls.  The value must match a ClusterIssuer name.
+    cert-manager.io/cluster-issuer: letsencrypt-staging
+
+    # --- Ingress controller annotations ----------------------
+    # These depend on which Ingress controller is installed.
+    # For GKE Ingress (google-managed):
+    kubernetes.io/ingress.class: "gce"
+
+    # For nginx-ingress-controller (uncomment if using nginx):
+    # nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    # nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+
+    # Redirect HTTP to HTTPS automatically:
+    # (GKE-specific annotation)
+    kubernetes.io/ingress.allow-http: "false"
+
+spec:
+  # ingressClassName: the modern way to select the controller
+  # (replaces kubernetes.io/ingress.class annotation above)
+  ingressClassName: gce
+
+  # tls: tells the Ingress controller to terminate TLS.
+  # cert-manager will create/manage the named Secret.
+  tls:
+    - hosts:
+        - lab.cluster-dreams.example.com    # must match a dnsName in the cert
+        - api.cluster-dreams.example.com
+      secretName: lab-tls-secret            # cert-manager writes the keypair here
+
+  rules:
+    # --- Virtual host: lab.cluster-dreams.example.com -------
+    - host: lab.cluster-dreams.example.com
+      http:
+        paths:
+          - path: /api
+            pathType: Prefix                # matches /api, /api/*, etc.
+            backend:
+              service:
+                name: api-service
+                port:
+                  number: 8080
+
+          - path: /web
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend-svc
+                port:
+                  number: 80
+
+    # --- Virtual host: api.cluster-dreams.example.com -------
+    - host: api.cluster-dreams.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: api-service
+                port:
+                  number: 8080

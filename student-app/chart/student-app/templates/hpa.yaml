@@ -1,0 +1,45 @@
+# =============================================================================
+# K8S CONCEPT: HorizontalPodAutoscaler (HPA)
+#
+# The HPA watches a metric (CPU by default) and adjusts the Deployment's
+# replica count to stay near the target utilisation.
+#
+# Prerequisites:
+#   - metrics-server must be running in the cluster
+#     GKE: enabled by default
+#     Minikube: minikube addons enable metrics-server
+#
+# To observe HPA in action:
+#   kubectl get hpa -w
+#   # In another terminal, generate load:
+#   kubectl run -it --rm load --image=busybox -- \
+#     sh -c "while true; do wget -q -O- http://student-app-api/api/items; done"
+# =============================================================================
+{{- if .Values.autoscaling.enabled }}
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ include "student-app.fullname" . }}-api
+  labels:
+    {{- include "student-app.labels" . | nindent 4 }}
+spec:
+  # K8S CONCEPT: scaleTargetRef
+  # Points at the Deployment to scale.  HPA reads its current replica count
+  # and writes back the desired count.
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ include "student-app.fullname" . }}-api
+
+  minReplicas: {{ .Values.autoscaling.minReplicas }}
+  maxReplicas: {{ .Values.autoscaling.maxReplicas }}
+
+  metrics:
+    # Scale on CPU utilisation relative to the container's CPU request
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: {{ .Values.autoscaling.targetCPUUtilizationPercentage }}
+{{- end }}

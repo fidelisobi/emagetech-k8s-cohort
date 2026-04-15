@@ -1,0 +1,140 @@
+# ============================================================
+# Lab 23 — Scaling: Topology Spread Constraints
+# ============================================================
+# Topology Spread Constraints control how pods are distributed
+# across failure domains (zones, nodes, racks) in the cluster.
+#
+# WHY THIS MATTERS
+# ----------------
+# Without spread constraints, the scheduler may place all pods
+# on a single zone or node. If that zone has an outage, all
+# pods go down simultaneously.
+#
+# With topology spread, pods are spread across zones so the
+# app survives a single zone failure.
+#
+# KEY CONCEPTS
+# ------------
+# - topologyKey: the node label that defines the "domain"
+#   (e.g. topology.kubernetes.io/zone splits by zone)
+# - maxSkew: max allowed difference in pod count between domains
+#   (maxSkew=1 means no zone can have more than 1 extra pod)
+# - whenUnsatisfiable: what to do if constraint can't be met
+#   DoNotSchedule = strict (pod stays Pending)
+#   ScheduleAnyway = best-effort (pod gets placed but constraint logged)
+#
+# Apply:
+#   kubectl apply -f 03-topology-spread.yaml
+#
+# Verify distribution:
+#   kubectl get pods -n scaling-lab -l app=zone-spread \
+#     -o wide --sort-by='{.spec.nodeName}'
+#   # Pods should be spread across different zones
+# ============================================================
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: zone-spread-app
+  namespace: scaling-lab
+spec:
+  replicas: 6           # 6 replicas across (typically) 3 zones = 2 per zone
+  selector:
+    matchLabels:
+      app: zone-spread
+  template:
+    metadata:
+      labels:
+        app: zone-spread
+    spec:
+      # -------------------------------------------------------
+      # TOPOLOGY SPREAD CONSTRAINTS
+      # These live in the Pod spec (not Deployment spec).
+      # They are evaluated by the scheduler when placing pods.
+      # -------------------------------------------------------
+      topologySpreadConstraints:
+
+        # --- Constraint 1: Spread across ZONES ----------------
+        - topologyKey: topology.kubernetes.io/zone
+          # Standard GKE label set on every node. Values look like:
+          # "us-central1-a", "us-central1-b", "us-central1-c"
+
+          maxSkew: 1
+          # maxSkew=1 means the busiest zone can have at most
+          # 1 more pod than the least-loaded zone.
+          # Example with 6 pods across 3 zones:
+          #   OK:   zone-a=2, zone-b=2, zone-c=2  (skew=0)
+          #   OK:   zone-a=3, zone-b=2, zone-c=1  (skew=2 — too high!)
+          #   OK:   zone-a=2, zone-b=2, zone-c=2  (scheduler enforces this)
+
+          whenUnsatisfiable: DoNotSchedule
+          # DoNotSchedule: pod stays Pending if constraint cannot be met.
+          # Use ScheduleAnyway for best-effort (non-critical workloads).
+
+          labelSelector:
+            matchLabels:
+              app: zone-spread    # count only pods that are PART OF THIS deployment
+
+          # matchLabelKeys (Kubernetes 1.27+): automatically scope the
+          # constraint to THIS deployment rollout, not older revisions.
+          # Uncomment if your cluster is 1.27+:
+          # matchLabelKeys:
+          #   - pod-template-hash
+
+        # --- Constraint 2: Spread across NODES ----------------
+        # Secondary constraint: within each zone, spread across nodes.
+        # This prevents all pods in a zone from landing on one node.
+        - topologyKey: kubernetes.io/hostname
+          # Each node has a unique hostname label.
+          maxSkew: 1
+          whenUnsatisfiable: ScheduleAnyway
+          # ScheduleAnyway here = best-effort node spread.
+          # If the cluster has few nodes per zone, we don't want
+          # pods to be Pending just because of node imbalance.
+          labelSelector:
+            matchLabels:
+              app: zone-spread
+
+      containers:
+        - name: app
+          image: nginx:1.25-alpine
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "32Mi"
+            limits:
+              cpu: "100m"
+              memory: "64Mi"
+
+          # Readiness probe: pod is only counted in spread calculations
+          # once it is Ready. This prevents uneven spread during rollouts.
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 5
+            periodSeconds: 10
+
+      # affinity: optional — prefer nodes with existing pods of this app
+      # to group them (anti-affinity would be the opposite).
+      # Topology spread constraints are generally preferred over affinity
+      # for even distribution.
+
+# ============================================================
+# VERIFY ZONE DISTRIBUTION
+# ============================================================
+# kubectl get nodes --label-columns topology.kubernetes.io/zone
+#
+# kubectl get pods -n scaling-lab -l app=zone-spread \
+#   -o custom-columns=\
+# 'POD:.metadata.name,NODE:.spec.nodeName,READY:.status.conditions[-1].status'
+#
+# To see which zone each pod landed in:
+# for pod in $(kubectl get pod -n scaling-lab -l app=zone-spread -o name); do
+#   node=$(kubectl get $pod -n scaling-lab -o jsonpath='{.spec.nodeName}')
+#   zone=$(kubectl get node $node -o jsonpath='{.metadata.labels.topology\.kubernetes\.io/zone}')
+#   echo "$pod -> $node -> $zone"
+# done
+# ============================================================

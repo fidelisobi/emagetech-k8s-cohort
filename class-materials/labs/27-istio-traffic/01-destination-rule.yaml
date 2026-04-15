@@ -1,0 +1,85 @@
+# ============================================================
+# Lab 27 — Istio Traffic Management: Step 1 — DestinationRule
+# ============================================================
+# A DestinationRule defines subsets of a service and applies
+# traffic policies (load balancing, connection pool settings,
+# outlier detection) to traffic going TO that service.
+#
+# Think of DestinationRule as the "server-side" configuration:
+#   VirtualService  = where to SEND traffic (routing)
+#   DestinationRule = how to TALK to the destination (policy)
+#
+# The Bookinfo app has three versions of the `reviews` service:
+#   v1 — shows no star ratings
+#   v2 — shows black star ratings
+#   v3 — shows red star ratings
+#
+# Each version is identified by the label  version: v1/v2/v3
+# on the pods. The DestinationRule exposes these as named subsets.
+#
+# Prerequisites:
+#   Bookinfo app deployed in the `bookinfo` namespace
+#   Istio sidecar injection enabled in bookinfo namespace
+#
+# Verify prerequisites:
+#   kubectl get pods -n bookinfo          # all pods Running
+#   kubectl get pods -n bookinfo -o wide  # should show 2 containers each (app + sidecar)
+#
+# Apply:
+#   kubectl apply -f 01-destination-rule.yaml
+# ============================================================
+
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: reviews-destination-rule
+  namespace: bookinfo             # must be in the same namespace as the service
+spec:
+  # host: the Kubernetes service name this rule applies to.
+  # Istio matches this against the service's FQDN:
+  #   reviews.bookinfo.svc.cluster.local
+  host: reviews
+
+  # trafficPolicy: applies to ALL subsets unless overridden per subset.
+  trafficPolicy:
+    loadBalancer:
+      # ROUND_ROBIN: distribute requests evenly across healthy endpoints.
+      # Other options: LEAST_CONN, RANDOM, PASSTHROUGH
+      simple: ROUND_ROBIN
+
+    # connectionPool: controls connection limits to prevent overload.
+    connectionPool:
+      http:
+        http1MaxPendingRequests: 100    # max queued requests
+        http2MaxRequests: 1000          # max concurrent requests (HTTP/2)
+
+    # outlierDetection: circuit breaker — automatically ejects unhealthy hosts.
+    # If a host returns 5xx errors too often, Istio stops sending it traffic.
+    outlierDetection:
+      consecutiveGatewayErrors: 5      # eject after 5 consecutive gateway errors
+      interval: 30s                    # check interval
+      baseEjectionTime: 30s            # minimum ejection duration
+      maxEjectionPercent: 50           # never eject more than 50% of hosts
+
+  # subsets: named groups of pods, differentiated by label selectors.
+  # VirtualServices reference these subset names for routing decisions.
+  subsets:
+    - name: v1                          # subset name used in VirtualService
+      labels:
+        version: v1                     # selects pods with label version=v1
+      # trafficPolicy here OVERRIDES the top-level policy for this subset only
+      trafficPolicy:
+        loadBalancer:
+          simple: ROUND_ROBIN
+
+    - name: v2
+      labels:
+        version: v2                     # selects pods with label version=v2
+
+    - name: v3
+      labels:
+        version: v3                     # selects pods with label version=v3
+      # v3 can have its own traffic policy if needed — e.g. different LB algorithm
+      trafficPolicy:
+        loadBalancer:
+          simple: LEAST_CONN            # send to the replica with fewest active connections

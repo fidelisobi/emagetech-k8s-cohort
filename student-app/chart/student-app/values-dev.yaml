@@ -1,0 +1,51 @@
+# =============================================================================
+# values-dev.yaml — Development environment overrides
+#
+# Usage:
+#   helm upgrade --install student-app ./chart/student-app \
+#     -f chart/student-app/values.yaml \
+#     -f chart/student-app/values-dev.yaml
+#
+# K8S CONCEPT: Multiple values files (layering)
+# Helm merges values files left-to-right.  The last file wins on conflicts.
+# Use this pattern to share a base config and override per-environment.
+# =============================================================================
+
+api:
+  # In dev, run only one replica to save cluster resources
+  replicaCount: 1
+
+  resources:
+    requests:
+      cpu: "50m"
+      memory: "64Mi"
+    limits:
+      cpu: "200m"
+      memory: "128Mi"
+
+  config:
+    appVersion: "1.0.0-dev"
+
+frontend:
+  replicaCount: 1
+
+# K8S CONCEPT: Disable HPA in dev (no need to autoscale a dev cluster)
+autoscaling:
+  enabled: false
+
+# Keep ServiceMonitor off unless Prometheus is installed in the dev cluster
+serviceMonitor:
+  enabled: false
+
+postgresql:
+  primary:
+    persistence:
+      # Smaller disk in dev
+      size: 500Mi
+    resources:
+      requests:
+        cpu: "50m"
+        memory: "128Mi"
+      limits:
+        cpu: "250m"
+        memory: "256Mi"

@@ -1,0 +1,96 @@
+# ============================================================
+# Lab 27 — Istio Traffic Management: Step 5 — Fault Injection
+# ============================================================
+# Fault injection lets you deliberately introduce errors and
+# latency into the service mesh — without changing any app code.
+#
+# This is used for:
+#   - Chaos engineering: is your app resilient to slow dependencies?
+#   - Testing circuit breakers and timeouts
+#   - Verifying retry logic works correctly
+#
+# TWO FAULT TYPES
+# ---------------
+#   delay: adds artificial latency (simulates a slow service)
+#   abort: returns an HTTP error code (simulates a crashed service)
+#
+# This VirtualService injects a 5-second delay into 50% of
+# requests to the `ratings` service.
+#
+# Apply:
+#   kubectl apply -f 05-fault-injection.yaml
+#
+# Observe: open Bookinfo in a browser and refresh multiple times.
+# About half the time, the page will take 5+ seconds to load
+# (because productpage waits for ratings which is slow).
+#
+# Check: if you configured a timeout on productpage → reviews
+# that is less than 5s, you may see timeout errors instead.
+# ============================================================
+
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: ratings
+  namespace: bookinfo
+spec:
+  hosts:
+    - ratings
+
+  http:
+    - name: "delay-50-percent-of-requests"
+      # match: route based on the end-user header.
+      # Here we apply the fault to ALL users (no match filter).
+      # In practice, you might limit fault injection to specific test users:
+      #   match:
+      #     - headers:
+      #         end-user:
+      #           exact: chaos-test-user
+      fault:
+        # --- Delay fault ----------------------------------------
+        delay:
+          # percentage: what fraction of requests get the delay.
+          # 50.0 = exactly half of all requests are delayed.
+          percentage:
+            value: 50.0
+
+          # fixedDelay: how long to wait before forwarding the request.
+          # This simulates a slow database or downstream service.
+          fixedDelay: 5s
+
+        # --- Abort fault (uncomment to test error handling) ------
+        # abort:
+        #   percentage:
+        #     value: 20.0          # 20% of requests get an HTTP 500
+        #   httpStatus: 500
+
+      route:
+        - destination:
+            host: ratings
+            subset: v1             # requires DestinationRule with ratings subsets
+          weight: 100
+
+# ============================================================
+# ADD A DESTINATION RULE FOR RATINGS (required for `subset: v1`)
+# ============================================================
+---
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: ratings-destination-rule
+  namespace: bookinfo
+spec:
+  host: ratings
+  subsets:
+    - name: v1
+      labels:
+        version: v1
+
+# ============================================================
+# TO CLEAN UP (remove the fault without deleting the VS):
+#   kubectl patch virtualservice ratings -n bookinfo \
+#     --type='json' \
+#     -p='[{"op":"remove","path":"/spec/http/0/fault"}]'
+#
+# OR just re-apply the original VirtualService without the fault block.
+# ============================================================

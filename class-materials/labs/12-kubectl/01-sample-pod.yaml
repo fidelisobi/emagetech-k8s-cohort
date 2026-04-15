@@ -1,0 +1,77 @@
+# ============================================================
+# Sample Pod for kubectl Essentials Lab
+# ============================================================
+# This pod is intentionally simple so that students can focus
+# on learning kubectl commands rather than application logic.
+# It runs nginx and exposes port 80 inside the cluster.
+# ============================================================
+
+apiVersion: v1          # The API version for core objects like Pod, Service, ConfigMap
+kind: Pod               # The resource type we are creating
+metadata:
+  # The name must be unique within the namespace.
+  # kubectl commands reference pods by this name.
+  name: sample-nginx
+
+  # Namespace determines which "virtual cluster" this pod lives in.
+  # Omitting it uses the namespace your current context points to (usually "default").
+  namespace: default
+
+  # Labels are arbitrary key-value pairs attached to the object.
+  # They are the primary mechanism for selecting, filtering, and grouping resources.
+  # Convention: use lowercase keys; separate words with hyphens or dots.
+  labels:
+    app: sample-nginx        # Logical application name — used by Services to route traffic
+    env: training            # Environment tag — useful for filtering across environments
+    tier: frontend           # Tier in the application stack (frontend / backend / cache)
+    lab: "12-kubectl"        # Custom label so we can find all lab-12 objects at once
+
+  # Annotations store non-identifying metadata — richer than labels.
+  # Annotations are NOT used for selection; they are documentation or hints to tools.
+  annotations:
+    description: "Simple nginx pod used for kubectl practice"
+    maintainer: "training-team"
+    # This annotation follows Kubernetes conventions for linking to documentation
+    kubernetes.io/change-cause: "Initial creation for lab 12"
+
+spec:
+  # The containers array defines every container in the pod.
+  # A pod can have multiple containers that share the same network namespace
+  # (same IP address) and can share volumes.
+  containers:
+    - name: nginx           # Container name — used in logs, exec, and multi-container selectors
+      image: nginx:1.25     # Image and tag. Pin the tag so the lab is reproducible.
+
+      # ports are informational — they tell humans (and tools) what the container listens on.
+      # NOT specifying a port does NOT block traffic; containers can still receive connections.
+      ports:
+        - containerPort: 80    # The port nginx listens on inside the container
+          protocol: TCP        # TCP is the default; could also be UDP or SCTP
+
+      # Resource requests and limits help the scheduler place the pod and protect
+      # the node from runaway containers.
+      #
+      # requests — the minimum guaranteed amount; used by the scheduler
+      # limits   — the hard ceiling; container is throttled (CPU) or OOMKilled (memory)
+      resources:
+        requests:
+          cpu: "50m"        # 50 millicores = 5% of one CPU core
+          memory: "64Mi"    # 64 mebibytes
+        limits:
+          cpu: "200m"       # 200 millicores = 20% of one CPU core
+          memory: "128Mi"   # 128 mebibytes
+
+      # Environment variables injected into the container at startup.
+      # These show up in `kubectl describe pod` and are visible inside the container
+      # via the standard UNIX environment.
+      env:
+        - name: LAB_NAME
+          value: "kubectl-essentials"
+        - name: NGINX_PORT
+          value: "80"
+
+  # restartPolicy controls what happens when a container exits.
+  # Always  — restart regardless of exit code (default for long-running pods)
+  # OnFailure — restart only on non-zero exit codes
+  # Never   — never restart (good for one-off Job pods)
+  restartPolicy: Always

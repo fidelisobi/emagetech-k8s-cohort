@@ -1,0 +1,110 @@
+# ============================================================
+# Lab 20 — Persistent Storage
+# File 02: Pods sharing a PVC
+# ============================================================
+# This file defines TWO pods:
+#
+#   writer-pod — mounts the PVC and writes a timestamped file
+#   reader-pod — mounts the SAME PVC and reads the file back
+#
+# IMPORTANT: Because the PVC accessMode is ReadWriteOnce, both
+# pods must be scheduled on the SAME node to mount concurrently.
+# In practice, for the lab exercise:
+#   1. Apply writer-pod, let it write, then delete it.
+#   2. Apply reader-pod to verify data survived pod deletion.
+#
+# Both pods are defined in this single file separated by ---
+# Apply only one at a time using -l selectors or editing the file.
+#
+# Apply:
+#   kubectl apply -f 02-pod-with-pvc.yaml
+# ============================================================
+
+# --- Writer Pod ----------------------------------------------
+# Mounts the PVC at /data, writes a file, then sleeps so
+# we have time to exec in and inspect.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: writer-pod
+  namespace: storage-lab
+  labels:
+    lab: "20-storage"
+    role: writer
+spec:
+  restartPolicy: Never
+  containers:
+    - name: writer
+      image: busybox:1.36
+      command: ["sh", "-c"]
+      args:
+        - |
+          echo "Writer pod starting..."
+          # Write a timestamped message to persistent storage
+          echo "Written by writer-pod at $(date -u '+%Y-%m-%dT%H:%M:%SZ')" \
+            > /data/message.txt
+          echo "Hostname: $(hostname)" >> /data/message.txt
+          echo "File written successfully:"
+          cat /data/message.txt
+          echo "Sleeping so you can inspect the pod..."
+          sleep 3600
+      resources:
+        requests:
+          cpu: "50m"
+          memory: "32Mi"
+        limits:
+          cpu: "100m"
+          memory: "64Mi"
+      volumeMounts:
+        # Mount the PVC at /data inside the container
+        - name: persistent-data
+          mountPath: /data
+  volumes:
+    - name: persistent-data
+      # Reference the PVC by name — the same PVC used by reader-pod
+      persistentVolumeClaim:
+        claimName: app-data-pvc   # must match PVC metadata.name
+
+---
+# --- Reader Pod ----------------------------------------------
+# Mounts the SAME PVC and reads the file left by writer-pod.
+# Deploy this AFTER deleting writer-pod to demonstrate persistence.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: reader-pod
+  namespace: storage-lab
+  labels:
+    lab: "20-storage"
+    role: reader
+spec:
+  restartPolicy: Never
+  containers:
+    - name: reader
+      image: busybox:1.36
+      command: ["sh", "-c"]
+      args:
+        - |
+          echo "Reader pod starting..."
+          echo "Contents of /data:"
+          ls -la /data/
+          echo ""
+          echo "Reading message.txt:"
+          cat /data/message.txt || echo "ERROR: file not found!"
+          echo ""
+          echo "Data survived pod deletion — persistence confirmed."
+          sleep 3600
+      resources:
+        requests:
+          cpu: "50m"
+          memory: "32Mi"
+        limits:
+          cpu: "100m"
+          memory: "64Mi"
+      volumeMounts:
+        - name: persistent-data
+          mountPath: /data
+  volumes:
+    - name: persistent-data
+      persistentVolumeClaim:
+        claimName: app-data-pvc   # same PVC — same underlying disk

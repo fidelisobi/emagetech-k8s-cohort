@@ -1,0 +1,161 @@
+# ============================================================
+# Lab 25 — Observability: ServiceMonitor
+# ============================================================
+# A ServiceMonitor is a Prometheus Operator custom resource that
+# tells Prometheus which Services to scrape and how.
+#
+# Without a ServiceMonitor, Prometheus has no knowledge of your
+# application. With one, it discovers scrape targets automatically
+# by matching Service labels — no static IP configuration needed.
+#
+# How it works:
+#   1. You label your Service (e.g., app: student-app)
+#   2. The ServiceMonitor selects that Service via matchLabels
+#   3. Prometheus Operator reads the ServiceMonitor and generates
+#      a scrape config in Prometheus automatically
+#   4. Prometheus scrapes /metrics on the specified port
+#
+# Prerequisites:
+#   kube-prometheus-stack must be installed in the "monitoring" namespace.
+#   Verify: kubectl get servicemonitor -n monitoring
+#
+# Apply:
+#   kubectl apply -f 01-servicemonitor.yaml
+#
+# Verify target appears in Prometheus:
+#   kubectl port-forward svc/prometheus-monitoring-kube-prometheus -n monitoring 9090:9090
+#   Open: http://localhost:9090/targets
+#   Look for: serviceMonitor/default/student-app-monitor
+# ============================================================
+
+# --- Namespace -----------------------------------------------
+# The student-app runs in the default namespace.
+# The ServiceMonitor also lives here; Prometheus is configured
+# to watch ServiceMonitors across all namespaces.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: observability-lab
+  labels:
+    # This label allows Prometheus to discover ServiceMonitors
+    # in this namespace (required by kube-prometheus-stack's
+    # default serviceMonitorNamespaceSelector).
+    kubernetes.io/metadata.name: observability-lab
+
+---
+# --- Simulated student-app Deployment -------------------------
+# A lightweight HTTP server that exposes Prometheus metrics on /metrics.
+# We use the prometheus/client-python example image so we have real
+# metrics to query without needing to build a custom image.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: student-app
+  namespace: observability-lab
+  labels:
+    app: student-app
+spec:
+  replicas: 2                     # 2 replicas so we can observe multi-target scraping
+  selector:
+    matchLabels:
+      app: student-app
+  template:
+    metadata:
+      labels:
+        app: student-app
+      annotations:
+        # Optional: Prometheus can also scrape via pod annotations (without ServiceMonitor).
+        # We define the annotation here for reference, but the ServiceMonitor below
+        # is the recommended approach for kube-prometheus-stack deployments.
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "5000"
+        prometheus.io/path: "/metrics"
+    spec:
+      containers:
+        - name: student-app
+          # prom/prometheus image exposes /metrics on port 9090 internally,
+          # but we remap via containerPort. For a realistic student-app substitute
+          # replace this with your actual application image.
+          image: nginx:1.25-alpine   # placeholder — replace with your app image
+          ports:
+            - name: http-metrics     # IMPORTANT: the port NAME must match the ServiceMonitor
+              containerPort: 5000
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+
+---
+# --- Service --------------------------------------------------
+# The ServiceMonitor selects this Service by its labels.
+# The Service must expose a named port that matches the ServiceMonitor's
+# `port` field — Prometheus uses the port NAME, not the number.
+apiVersion: v1
+kind: Service
+metadata:
+  name: student-app
+  namespace: observability-lab
+  labels:
+    # These labels are what the ServiceMonitor's selector matches.
+    # If these labels don't match, Prometheus will not scrape this app.
+    app: student-app
+    release: prometheus-monitoring  # must match the Prometheus Operator's serviceMonitorSelector
+spec:
+  selector:
+    app: student-app               # routes traffic to pods with this label
+  ports:
+    - name: http-metrics           # name must match ServiceMonitor's endpoints[].port
+      port: 5000                   # port exposed on the Service (cluster-internal)
+      targetPort: http-metrics     # maps to containerPort named "http-metrics" on the pod
+
+---
+# --- ServiceMonitor -------------------------------------------
+# This is the core resource. It instructs Prometheus Operator to
+# add a scrape job for the student-app Service.
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: student-app-monitor
+  namespace: observability-lab
+  labels:
+    # CRITICAL: This label must match the Prometheus Operator's
+    # serviceMonitorSelector. For kube-prometheus-stack the default is:
+    #   release: prometheus-monitoring
+    # Check your Prometheus CR:
+    #   kubectl get prometheus -n monitoring -o yaml | grep serviceMonitorSelector
+    release: prometheus-monitoring
+spec:
+  # selector: which Services this ServiceMonitor applies to.
+  # Prometheus will scrape every Service in the matched namespaces
+  # that has these labels.
+  selector:
+    matchLabels:
+      app: student-app             # must match the Service's labels above
+
+  # namespaceSelector: which namespaces to look in for matching Services.
+  # "any: true" means look in ALL namespaces (useful for a single monitor
+  # that covers dev, staging, prod Services with the same labels).
+  # To restrict to specific namespaces, use:
+  #   matchNames: [observability-lab, production]
+  namespaceSelector:
+    matchNames:
+      - observability-lab
+
+  # endpoints: how to scrape each matched Service port.
+  # You can have multiple endpoints if your app exposes multiple metric ports.
+  endpoints:
+    - port: http-metrics           # must match the Service's port NAME (not number)
+      path: /metrics               # HTTP path Prometheus will GET (default is /metrics)
+      interval: 15s                # how often Prometheus scrapes (default: Prometheus global interval)
+      scrapeTimeout: 10s           # give up if scrape doesn't respond within 10s
+
+      # relabelings: modify or filter labels on scraped metrics before ingestion.
+      # This example adds an "environment" label to every metric from this target.
+      relabelings:
+        - targetLabel: environment
+          replacement: lab
+          # This means every metric will have: environment="lab"
+          # Useful for filtering in Grafana dashboards across environments.

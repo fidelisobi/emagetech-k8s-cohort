@@ -1,0 +1,91 @@
+# ============================================================
+# Lab 19 — Platform Addons: Step 1 — ClusterIssuer
+# ============================================================
+# cert-manager automates TLS certificate issuance and renewal.
+# It connects to certificate authorities (CAs) and manages
+# the full lifecycle of TLS certificates as Kubernetes objects.
+#
+# RESOURCE HIERARCHY
+# ------------------
+#   ClusterIssuer  (cluster-scoped) — defines HOW to get certs
+#       └── Certificate  (namespace-scoped) — requests a cert
+#               └── Secret  (namespace-scoped) — stores the cert
+#
+# WHY DNS01 challenge?
+#   - HTTP01 requires the domain to be publicly reachable
+#   - DNS01 proves domain ownership by creating a TXT record
+#   - DNS01 works for private clusters and wildcard certs
+#
+# Prerequisites:
+#   cert-manager must be installed:
+#     kubectl get pods -n cert-manager
+#   Cloud DNS API must be enabled on project cluster-dreams
+#   cert-manager service account needs DNS admin role
+#
+# Apply:
+#   kubectl apply -f 01-clusterissuer.yaml
+#
+# Verify:
+#   kubectl get clusterissuer letsencrypt-staging
+#   kubectl describe clusterissuer letsencrypt-staging
+# ============================================================
+
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  # "staging" issues certs signed by Let's Encrypt's TEST CA.
+  # These certs are NOT trusted by browsers but have much higher
+  # rate limits — perfect for lab development.
+  # For production, change to letsencrypt-prod with the prod ACME URL.
+  name: letsencrypt-staging
+spec:
+  acme:
+    # Let's Encrypt Staging ACME directory URL.
+    # Staging CA: "Fake LE Intermediate X1" (not browser-trusted)
+    server: https://acme-staging-v02.api.letsencrypt.org/directory
+
+    # Email address for expiry notifications and account recovery.
+    # Let's Encrypt will contact this address if your cert is about
+    # to expire and auto-renewal fails.
+    email: dr.alade@gmail.com
+
+    # privateKeySecretRef: cert-manager stores the ACME account
+    # private key in this Secret. It is created automatically.
+    privateKeySecretRef:
+      name: letsencrypt-staging-account-key
+
+    solvers:
+      # DNS01 solver using Google Cloud DNS.
+      # cert-manager creates a _acme-challenge.<domain> TXT record
+      # to prove control of the domain to Let's Encrypt.
+      - dns01:
+          cloudDNS:
+            # GCP project that hosts the Cloud DNS zone
+            project: cluster-dreams
+
+            # serviceAccountSecretRef: Kubernetes Secret containing
+            # a GCP service account JSON key with DNS Admin role.
+            # Create with:
+            #   kubectl create secret generic clouddns-sa-key \
+            #     --from-file=key.json=/path/to/sa-key.json \
+            #     -n cert-manager
+            serviceAccountSecretRef:
+              name: clouddns-sa-key     # Secret name in cert-manager namespace
+              key: key.json             # key within the Secret
+
+        # selector: restrict this solver to specific domains.
+        # Remove to use this solver for ALL domains on this issuer.
+        selector:
+          dnsZones:
+            - "cluster-dreams.example.com"    # update to your actual domain
+
+# ============================================================
+# PRODUCTION: use letsencrypt-prod (different ACME URL):
+#
+# server: https://acme-v02.api.letsencrypt.org/directory
+# name: letsencrypt-prod
+# privateKeySecretRef.name: letsencrypt-prod-account-key
+#
+# RATE LIMITS (prod): 50 certs per registered domain per week.
+# Always test with staging first!
+# ============================================================

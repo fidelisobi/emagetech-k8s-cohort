@@ -1,0 +1,49 @@
+# ============================================================
+# Lab 17 — Network Policies: Step 2 — Allow Frontend → Backend
+# ============================================================
+# Now that all traffic is denied, we selectively punch a hole:
+# only pods labelled  role=frontend  may reach the backend on
+# port 8080.
+#
+# The "from" block uses a podSelector inside the same namespace.
+# Traffic from the `attacker` pod (label app=attacker) will
+# still be blocked because it does not have role=frontend.
+#
+# Apply:
+#   kubectl apply -f 02-allow-frontend-to-backend.yaml
+#
+# Test 1 — should SUCCEED (frontend → backend):
+#   FRONTEND=$(kubectl get pod -n netpol-lab -l app=frontend -o name | head -1)
+#   kubectl exec -n netpol-lab $FRONTEND -- curl -s --max-time 3 http://backend-svc:8080
+#
+# Test 2 — should FAIL (attacker → backend):
+#   ATTACKER=$(kubectl get pod -n netpol-lab -l app=attacker -o name | head -1)
+#   kubectl exec -n netpol-lab $ATTACKER -- curl -s --max-time 3 http://backend-svc:8080
+# ============================================================
+
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-frontend-to-backend
+  namespace: netpol-lab
+spec:
+  # This policy targets the BACKEND pods.
+  # It defines which traffic may flow INTO them (ingress).
+  podSelector:
+    matchLabels:
+      app: backend        # applies to all pods with app=backend
+
+  policyTypes:
+    - Ingress             # we are only controlling inbound traffic here
+
+  ingress:
+    - # Each list item is an independent allow-rule.
+      # "Allow ingress from pods with role=frontend on port 8080"
+      from:
+        - podSelector:
+            matchLabels:
+              role: frontend    # only pods with this label are allowed in
+      ports:
+        - protocol: TCP
+          port: 8080            # only traffic on port 8080 is allowed
+                                # traffic on other ports remains blocked

@@ -1,0 +1,46 @@
+# ============================================================
+# Lab 27 — Istio Traffic Management: Step 2 — Route All to v1
+# ============================================================
+# A VirtualService defines routing rules that control HOW
+# traffic is directed to a service. It is the "client-side"
+# configuration — the Envoy proxy in the source pod uses
+# VirtualService rules to decide where to send requests.
+#
+# This VirtualService routes 100% of traffic to reviews v1
+# (no stars). This is the baseline state before canary testing.
+#
+# Apply:
+#   kubectl apply -f 02-virtualservice-v1-only.yaml
+#
+# Verify by opening Bookinfo in your browser several times —
+# the reviews section should ALWAYS show no stars (v1).
+#
+# Or test from a pod:
+#   kubectl exec -n bookinfo deploy/ratings-v1 -- \
+#     curl -s http://reviews:9080/reviews/1 | python3 -m json.tool
+# ============================================================
+
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: reviews
+  namespace: bookinfo
+spec:
+  # hosts: which services this VirtualService applies to.
+  # Requests to `reviews` (or its FQDN) will be intercepted by
+  # the Envoy sidecar and routed according to these rules.
+  hosts:
+    - reviews
+
+  # http: list of routing rules, evaluated in order.
+  # The FIRST matching rule wins.
+  http:
+    - name: "all-traffic-to-v1"
+      # match: if omitted, this rule matches ALL requests.
+      # You can add match conditions (headers, URIs, etc.) to narrow the scope.
+
+      route:
+        - destination:
+            host: reviews          # Kubernetes service name
+            subset: v1             # refers to the subset defined in DestinationRule
+          weight: 100              # 100% of traffic goes here

@@ -1,0 +1,150 @@
+# ============================================================
+# CRD Example — Custom Resource Definition for "Greeting"
+# ============================================================
+# A CustomResourceDefinition (CRD) extends the Kubernetes API
+# with a brand new resource type. Once applied, you can create,
+# list, get, delete, and even RBAC-protect instances of your
+# new type — just like built-in types (Pod, Service, etc.).
+#
+# This file contains TWO Kubernetes objects separated by "---":
+#   1. The CRD itself (defines the new API type "Greeting")
+#   2. A sample instance (a real Greeting object)
+#
+# Apply in order:
+#   kubectl apply -f 02-crd-example.yaml
+#
+# After applying, interact with it in the README exercises.
+# ============================================================
+
+# ============================================================
+# Object 1: The CustomResourceDefinition
+# ============================================================
+apiVersion: apiextensions.k8s.io/v1   # CRDs live in the apiextensions API group
+kind: CustomResourceDefinition         # We are defining a new resource type, not an instance
+
+metadata:
+  # CRD names follow a strict pattern: <plural>.<group>
+  # The group is a DNS-style domain you control (or invent for labs).
+  name: greetings.training.example.com
+
+spec:
+  # group — the API group under which your new type is registered.
+  # After creation, instances are at: /apis/training.example.com/v1/greetings
+  group: training.example.com
+
+  # scope — Namespaced means each Greeting belongs to a specific namespace,
+  # just like Pods do. The alternative is Cluster (like Nodes or PersistentVolumes).
+  scope: Namespaced
+
+  # names — defines how Kubernetes refers to your resource
+  names:
+    # plural — used in URLs and `kubectl get greetings`
+    plural: greetings
+    # singular — used in `kubectl get greeting` (without the s)
+    singular: greeting
+    # kind — the PascalCase name used in the `kind:` field of manifests
+    kind: Greeting
+    # shortNames — convenience aliases: `kubectl get gt` works after this
+    shortNames:
+      - gt
+
+  # versions — CRDs support multiple versions with conversion webhooks.
+  # We define only one version here to keep the lab simple.
+  versions:
+    - name: v1          # The version string used in apiVersion: training.example.com/v1
+      served: true      # This version is actively served by the API server
+      storage: true     # This version is used for persistence in etcd (only one can be true)
+
+      # schema validates every Greeting object at admission time.
+      # Objects that do not match the schema are rejected.
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            # spec holds the user-defined desired state of the object
+            spec:
+              type: object
+              # required lists fields that MUST be present; the API server rejects objects missing them
+              required:
+                - message
+                - language
+              properties:
+                # message — the greeting text
+                message:
+                  type: string
+                  # minLength enforces a minimum string length at admission
+                  minLength: 1
+                  maxLength: 256
+                  description: "The greeting message to display"
+
+                # language — which language the greeting is in
+                language:
+                  type: string
+                  # enum restricts the value to one of the listed options
+                  enum:
+                    - english
+                    - spanish
+                    - french
+                    - yoruba
+                    - swahili
+                  description: "Language of the greeting message"
+
+                # recipient — optional field demonstrating a non-required property
+                recipient:
+                  type: string
+                  maxLength: 128
+                  description: "Who the greeting is addressed to (optional)"
+
+            # status holds the observed state, typically written by a controller.
+            # In this lab there is no controller, so status stays empty.
+            status:
+              type: object
+              # x-kubernetes-preserve-unknown-fields allows status subfields we have not
+              # explicitly listed — useful when a controller adds its own status fields.
+              x-kubernetes-preserve-unknown-fields: true
+
+      # additionalPrinterColumns controls which columns `kubectl get greetings` shows.
+      # Without this, kubectl only shows NAME and AGE.
+      additionalPrinterColumns:
+        - name: Language
+          type: string
+          # jsonPath is a path into the object's JSON representation
+          jsonPath: .spec.language
+        - name: Message
+          type: string
+          jsonPath: .spec.message
+        - name: Recipient
+          type: string
+          jsonPath: .spec.recipient
+        - name: Age
+          type: date
+          jsonPath: .metadata.creationTimestamp
+
+---
+# ============================================================
+# Object 2: A sample Greeting instance
+# ============================================================
+# This is a real object of our new custom type.
+# Its apiVersion is <group>/<version> from the CRD spec above.
+# ============================================================
+
+apiVersion: training.example.com/v1   # Must match CRD spec.group + version name
+kind: Greeting                         # Must match CRD spec.names.kind exactly
+
+metadata:
+  name: hello-world          # Name of this specific Greeting instance
+  namespace: default
+
+  # Labels and annotations work on custom resources the same as on built-in types
+  labels:
+    lab: "13-api-objects"
+    purpose: demo
+  annotations:
+    description: "First greeting created in the CRD lab exercise"
+
+spec:
+  # These fields are validated against the CRD schema defined above.
+  # Changing "english" to "klingon" would cause the API server to reject the object.
+  message: "Hello, Kubernetes!"
+  language: english
+  recipient: "Training Cohort"

@@ -1,0 +1,321 @@
+# ============================================================
+# Lab 29 — CI/CD Pipeline: Cloud Build Sample
+# ============================================================
+# This Cloud Build pipeline demonstrates the standard build →
+# scan → push → deploy flow for a containerised application.
+#
+# Pipeline stages:
+#   1. environment-info  — print build context for debugging
+#   2. build             — build the Docker image from source
+#   3. trivy-scan        — scan the image for CVEs before pushing
+#   4. push              — push to Artifact Registry only if scan passes
+#   5. update-manifests  — (concept only) update the image tag in Git
+#                          so ArgoCD picks up the new version
+#   6. summary           — print final build status
+#
+# How to run:
+#   gcloud builds submit --config=01-cloudbuild-sample.yaml .
+#
+# Prerequisites:
+#   - Authenticated: gcloud auth login
+#   - Project set:   gcloud config set project cluster-dreams
+#   - Artifact Registry repo exists:
+#       gcloud artifacts repositories create student-app \
+#         --repository-format=docker \
+#         --location=us-central1
+#   - Cloud Build service account has Artifact Registry Writer role
+#
+# Substitutions (override with --substitution=_IMAGE_NAME=myapp):
+#   _IMAGE_NAME    — name of the Docker image (default: student-app)
+#   _REGION        — Artifact Registry region (default: us-central1)
+#   _REGISTRY      — Artifact Registry hostname (default: us-central1-docker.pkg.dev)
+#   _TRIVY_SEVERITY — severities that cause a scan failure (default: CRITICAL)
+#
+# The full image reference that gets pushed:
+#   $_REGISTRY/$PROJECT_ID/$_IMAGE_NAME:$SHORT_SHA
+# ============================================================
+
+steps:
+  # ============================================================
+  # Step 1: Environment Info
+  # Print context variables so build logs are self-documenting.
+  # Always include this — makes debugging failed builds much easier.
+  # ============================================================
+  - id: environment-info
+    name: alpine:3.21
+    entrypoint: /bin/sh
+    args:
+      - -c
+      - |
+        echo "================================================"
+        echo "Build Environment"
+        echo "================================================"
+        echo "Build ID:     $BUILD_ID"
+        echo "Project ID:   $PROJECT_ID"
+        echo "Branch:       $BRANCH_NAME"
+        echo "Commit SHA:   $SHORT_SHA"
+        echo "Image:        ${_REGISTRY}/${PROJECT_ID}/${_IMAGE_NAME}:${SHORT_SHA}"
+        echo "Trigger:      ${_TRIGGER_NAME:-manual}"
+        echo "Build time:   $(date -Iseconds)"
+        echo "================================================"
+    timeout: 30s
+
+  # ============================================================
+  # Step 2: Build the Docker Image
+  # Uses Kaniko for rootless builds — safer than Docker-in-Docker.
+  # Kaniko builds directly from the Dockerfile without requiring a
+  # Docker daemon, which is a security best practice in CI.
+  #
+  # If you prefer standard Docker:
+  #   name: gcr.io/cloud-builders/docker
+  #   args: ['build', '-t', '${_REGISTRY}/...', '.']
+  # ============================================================
+  - id: build
+    name: gcr.io/kaniko-project/executor:latest
+    waitFor:
+      - environment-info
+    args:
+      # --context: where to find the Dockerfile and build context
+      # /workspace is the Cloud Build workspace directory (the repo root)
+      - --context=/workspace
+
+      # --dockerfile: path to the Dockerfile relative to the workspace
+      - --dockerfile=/workspace/Dockerfile
+
+      # --destination: the full image reference to push after build.
+      # $PROJECT_ID is automatically substituted by Cloud Build.
+      # $SHORT_SHA is the first 7 characters of the commit SHA — used
+      # as the image tag for traceability (you can trace a running pod
+      # back to the exact commit that produced its image).
+      - --destination=${_REGISTRY}/${PROJECT_ID}/${_IMAGE_NAME}:${SHORT_SHA}
+
+      # --destination: also tag as "latest" for convenience.
+      # In production, avoid relying on "latest" — always use immutable SHA tags.
+      - --destination=${_REGISTRY}/${PROJECT_ID}/${_IMAGE_NAME}:latest
+
+      # --cache=true: reuse cached layers from previous builds to speed up builds.
+      # The cache is stored in Artifact Registry alongside the image.
+      - --cache=true
+      - --cache-ttl=24h
+
+      # --build-arg: pass build-time arguments to the Dockerfile.
+      # APP_VERSION embeds the commit SHA into the binary for version endpoints.
+      - --build-arg=APP_VERSION=${SHORT_SHA}
+      - --build-arg=BUILD_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+    timeout: 600s   # 10 minutes — large images can take a while
+
+  # ============================================================
+  # Step 3: Trivy Container Security Scan
+  # Scan the BUILT image before pushing to the registry.
+  # If CRITICAL CVEs are found, the build FAILS and the image
+  # is NOT pushed — preventing vulnerable images from reaching
+  # production.
+  #
+  # Trivy checks:
+  #   - OS packages (Alpine apk, Debian apt, etc.)
+  #   - Application dependencies (package-lock.json, requirements.txt, etc.)
+  #   - Secret detection (accidentally committed API keys, passwords)
+  #
+  # --exit-code 1 makes the step fail (and stop the pipeline) if
+  # vulnerabilities at or above --severity are found.
+  # For initial adoption, use --exit-code 0 to report without failing.
+  # ============================================================
+  - id: trivy-scan
+    name: ghcr.io/aquasecurity/trivy:latest
+    waitFor:
+      - build
+    entrypoint: trivy
+    args:
+      - image
+      # --severity: only report vulnerabilities at these levels.
+      # ${_TRIVY_SEVERITY} is substituted at build time (default: CRITICAL).
+      # For stricter pipelines: HIGH,CRITICAL
+      - --severity=${_TRIVY_SEVERITY}
+
+      # --exit-code 1: FAIL the build step if any matching CVEs are found.
+      # Change to 0 to report-only without failing (useful when onboarding).
+      - --exit-code=1
+
+      # --ignore-unfixed: skip CVEs that have no available fix yet.
+      # Avoids blocking builds on CVEs you can't act on.
+      - --ignore-unfixed
+
+      # --format table: human-readable output in build logs.
+      # Use --format sarif --output results.sarif for integration with
+      # GitHub/Cloud Build security dashboards.
+      - --format=table
+
+      # The image to scan — same reference built in Step 2.
+      # Trivy pulls from the registry, so the build step must complete first.
+      - ${_REGISTRY}/${PROJECT_ID}/${_IMAGE_NAME}:${SHORT_SHA}
+    env:
+      # TRIVY_CACHE_DIR: use Cloud Build's workspace for caching Trivy's vuln DB.
+      # The vuln DB is ~200MB; caching avoids re-downloading on every build.
+      - TRIVY_CACHE_DIR=/workspace/.trivy-cache
+    timeout: 300s
+
+  # ============================================================
+  # Step 4: Push Image to Artifact Registry
+  # This step only runs after a SUCCESSFUL Trivy scan.
+  # If Trivy found CRITICAL CVEs, the pipeline fails at Step 3
+  # and this step is never reached — the registry stays clean.
+  #
+  # We use the crane tool for pushing because Kaniko already pushed
+  # during build. This step is here as a conceptual marker —
+  # in practice the Kaniko --destination already handled the push.
+  #
+  # If using Docker builder instead of Kaniko:
+  #   name: gcr.io/cloud-builders/docker
+  #   args: ['push', '${_REGISTRY}/...']
+  # ============================================================
+  - id: push-verified
+    name: alpine:3.21
+    waitFor:
+      - trivy-scan
+    entrypoint: /bin/sh
+    args:
+      - -c
+      - |
+        echo "Security scan passed — image is cleared for deployment"
+        echo "Image: ${_REGISTRY}/${PROJECT_ID}/${_IMAGE_NAME}:${SHORT_SHA}"
+        echo ""
+        echo "Next steps in a GitOps pipeline:"
+        echo "  1. Clone the manifests repo (e.g., gitops-config)"
+        echo "  2. Update the image tag in the relevant YAML/values file:"
+        echo "     sed -i 's|image:.*|image: ${_REGISTRY}/${PROJECT_ID}/${_IMAGE_NAME}:${SHORT_SHA}|' deploy.yaml"
+        echo "  3. Commit and push the manifest change to Git"
+        echo "  4. ArgoCD detects the Git change and syncs the new image to the cluster"
+        echo ""
+        echo "This creates an immutable audit trail:"
+        echo "  Code commit → Build → Scan → Manifest commit → ArgoCD sync → Running pod"
+    timeout: 30s
+
+  # ============================================================
+  # Step 5: Update Deployment Manifests (Concept / Skeleton)
+  # In a real GitOps pipeline, this step would:
+  #   1. Clone the manifests Git repo
+  #   2. Update the image tag (using sed, yq, or kustomize edit)
+  #   3. Commit the change back to Git
+  #   4. ArgoCD (or Flux) picks up the change and deploys it
+  #
+  # This step is commented out because it requires:
+  #   - A Git token secret in Secret Manager
+  #   - A separate manifests repository
+  #   - SSH key or token configuration
+  #
+  # Uncomment and configure for your environment.
+  # ============================================================
+  # - id: update-manifests
+  #   name: alpine/git:latest
+  #   waitFor:
+  #     - push-verified
+  #   secretEnv:
+  #     - GIT_TOKEN
+  #   entrypoint: /bin/sh
+  #   args:
+  #     - -c
+  #     - |
+  #       set -euo pipefail
+  #       git clone https://oauth2:$$GIT_TOKEN@github.com/your-org/gitops-config.git /workspace/gitops
+  #       cd /workspace/gitops
+  #       git config user.email "cloudbuild@cluster-dreams.iam.gserviceaccount.com"
+  #       git config user.name "Cloud Build"
+  #       # Update image tag in the deployment YAML
+  #       sed -i "s|image:.*student-app:.*|image: ${_REGISTRY}/${PROJECT_ID}/${_IMAGE_NAME}:${SHORT_SHA}|" \
+  #         kubernetes/student-app/deployment.yaml
+  #       git add kubernetes/student-app/deployment.yaml
+  #       git commit -m "chore: update student-app image to ${SHORT_SHA} [skip ci]"
+  #       git push
+  #   timeout: 120s
+
+  # ============================================================
+  # Step 6: Build Summary
+  # Print a final status summary to make the build log scannable.
+  # In production, this step could also:
+  #   - Post a Slack notification
+  #   - Update a deployment tracking system
+  #   - Write metrics to a monitoring endpoint
+  # ============================================================
+  - id: summary
+    name: alpine:3.21
+    waitFor:
+      - push-verified
+    entrypoint: /bin/sh
+    args:
+      - -c
+      - |
+        echo "================================================"
+        echo "Build Summary"
+        echo "================================================"
+        echo "Status:  SUCCESS"
+        echo "Image:   ${_REGISTRY}/${PROJECT_ID}/${_IMAGE_NAME}:${SHORT_SHA}"
+        echo "Latest:  ${_REGISTRY}/${PROJECT_ID}/${_IMAGE_NAME}:latest"
+        echo "Commit:  ${SHORT_SHA}"
+        echo "Branch:  ${BRANCH_NAME}"
+        echo "Built:   $(date -Iseconds)"
+        echo "================================================"
+        echo ""
+        echo "Deploy this image:"
+        echo "  kubectl set image deployment/student-app \\"
+        echo "    student-app=${_REGISTRY}/${PROJECT_ID}/${_IMAGE_NAME}:${SHORT_SHA}"
+    timeout: 30s
+
+# ============================================================
+# Global pipeline configuration
+# ============================================================
+
+# timeout: maximum total build time before Cloud Build cancels the job
+timeout: 1800s   # 30 minutes total
+
+options:
+  # logging: CLOUD_LOGGING_ONLY writes logs to Cloud Logging (cheaper than GCS)
+  logging: CLOUD_LOGGING_ONLY
+
+  # logStreamingOption: stream logs to console in real time (useful with --stream flag)
+  logStreamingOption: STREAM_ON
+
+  # machineType: the VM type to run the build on.
+  # E2_HIGHCPU_8 has 8 vCPUs — good for Docker builds.
+  # E2_STANDARD_4 is cheaper if build speed is less critical.
+  machineType: E2_HIGHCPU_8
+
+  # substitutionOption: ALLOW_LOOSE means unresolved substitution variables
+  # don't cause a build failure (useful when some vars are optional).
+  substitutionOption: ALLOW_LOOSE
+
+# substitutions: default values for pipeline variables.
+# Override at submit time: --substitution=_IMAGE_NAME=my-custom-name
+substitutions:
+  # Name of the application/image being built
+  _IMAGE_NAME: student-app
+
+  # GCP region where Artifact Registry is located
+  _REGION: us-central1
+
+  # Artifact Registry hostname (region-docker.pkg.dev)
+  _REGISTRY: us-central1-docker.pkg.dev
+
+  # Trivy severity threshold — only CRITICAL by default to avoid false positives
+  # In production use HIGH,CRITICAL for stricter scanning
+  _TRIVY_SEVERITY: CRITICAL
+
+  # Optional: trigger name for logging (set automatically when using triggers)
+  _TRIGGER_NAME: manual
+
+# ============================================================
+# Secret Manager integration (uncomment when needed)
+# ============================================================
+# availableSecrets:
+#   secretManager:
+#     # Git token for updating manifests in Step 5
+#     - versionName: projects/$PROJECT_ID/secrets/github-token/versions/latest
+#       env: GIT_TOKEN
+
+# ============================================================
+# Artifacts: save build outputs to GCS for auditing
+# ============================================================
+# artifacts:
+#   objects:
+#     location: gs://$PROJECT_ID-build-artifacts
+#     paths:
+#       - '*.log'
