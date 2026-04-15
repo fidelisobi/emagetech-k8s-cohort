@@ -3,147 +3,106 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Kubernetes Cohort — Kickoff Session</title>
+<title>Kubernetes Cohort - Kickoff Session</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.6.1/dist/reveal.css" />
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.6.1/dist/theme/night.css" />
 <style>
   :root {
-    --emage-blue: #3b82f6;
-    --emage-green: #22c55e;
-    --emage-orange: #f97316;
-    --emage-purple: #a855f7;
-    --emage-red: #ef4444;
-    --emage-yellow: #eab308;
+    --blue: #3b82f6;
+    --green: #22c55e;
+    --orange: #f97316;
+    --purple: #a855f7;
+    --red: #ef4444;
   }
-
   .reveal { font-family: 'Segoe UI', system-ui, sans-serif; }
   .reveal h1, .reveal h2, .reveal h3 { text-transform: none; letter-spacing: -0.02em; }
+  .reveal section { padding: 28px 48px; box-sizing: border-box; }
 
-  /* Title slide */
-  .title-slide { background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 50%, #0f172a 100%); }
-  .title-slide h1 { font-size: 2.2em; font-weight: 800; color: #fff; margin-bottom: 0.2em; }
-  .title-slide .subtitle { font-size: 1.1em; color: #93c5fd; margin-bottom: 0.5em; }
-  .title-slide .date { font-size: 0.9em; color: #64748b; }
-  .emage-badge { display: inline-block; background: var(--emage-blue); color: #fff; padding: 6px 18px; border-radius: 20px; font-size: 0.8em; font-weight: 600; letter-spacing: 0.05em; margin-bottom: 1em; }
+  .emage-badge { display: inline-block; background: var(--blue); color: #fff; padding: 6px 18px; border-radius: 20px; font-size: 0.8em; font-weight: 700; letter-spacing: 0.06em; margin-bottom: 1em; }
 
-  /* Stat cards */
-  .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 1em; }
-  .stat-card { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 20px; text-align: center; }
-  .stat-card .number { font-size: 2.2em; font-weight: 800; color: var(--emage-blue); line-height: 1; }
-  .stat-card .label { font-size: 0.75em; color: #94a3b8; margin-top: 6px; }
+  .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 0.8em; }
+  .stat-card { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 18px; text-align: center; }
+  .stat-card .number { font-size: 2em; font-weight: 800; color: var(--blue); line-height: 1.1; }
+  .stat-card .label { font-size: 0.72em; color: #94a3b8; margin-top: 5px; line-height: 1.4; }
 
-  /* Phase badges */
-  .phase-badge { display: inline-block; padding: 4px 14px; border-radius: 20px; font-size: 0.75em; font-weight: 700; margin-right: 8px; }
-  .badge-green  { background: rgba(34,197,94,0.2);  color: #4ade80; }
-  .badge-yellow { background: rgba(234,179,8,0.2);  color: #fbbf24; }
-  .badge-red    { background: rgba(239,68,68,0.2);  color: #f87171; }
-  .badge-blue   { background: rgba(59,130,246,0.2); color: #93c5fd; }
+  .proj-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .proj-item { background: rgba(255,255,255,0.04); border-left: 3px solid var(--blue); padding: 9px 13px; border-radius: 0 8px 8px 0; }
+  .proj-item .pnum { font-size: 0.7em; color: #64748b; }
+  .proj-item .ptitle { font-weight: 600; color: #e2e8f0; font-size: 0.82em; }
 
-  /* Project grid */
-  .proj-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 0.75em; }
-  .proj-item { background: rgba(255,255,255,0.04); border-left: 3px solid var(--emage-blue); padding: 10px 14px; border-radius: 0 8px 8px 0; }
-  .proj-item .pnum { font-size: 0.75em; color: #64748b; }
-  .proj-item .ptitle { font-weight: 600; color: #e2e8f0; }
+  .journey-step { display: flex; align-items: center; gap: 14px; background: rgba(255,255,255,0.04); border-radius: 10px; padding: 11px 15px; margin-bottom: 9px; }
+  .step-num { font-size: 1.3em; min-width: 36px; text-align: center; }
+  .step-title { font-weight: 700; color: #e2e8f0; font-size: 0.9em; }
+  .step-sub { font-size: 0.72em; color: #94a3b8; margin-top: 2px; }
 
-  /* Salary chart */
-  .salary-bar { margin: 8px 0; }
-  .salary-bar .bar-label { font-size: 0.8em; color: #94a3b8; margin-bottom: 4px; }
-  .salary-bar .bar-track { background: rgba(255,255,255,0.08); border-radius: 4px; height: 28px; position: relative; overflow: hidden; }
-  .salary-bar .bar-fill { height: 100%; border-radius: 4px; display: flex; align-items: center; padding-left: 10px; font-size: 0.8em; font-weight: 700; color: #fff; }
-
-  /* Journey steps */
-  .journey-steps { display: flex; flex-direction: column; gap: 10px; }
-  .journey-step { display: flex; align-items: center; gap: 16px; background: rgba(255,255,255,0.04); border-radius: 10px; padding: 12px 16px; }
-  .step-num { font-size: 1.4em; min-width: 40px; text-align: center; }
-  .step-title { font-weight: 700; color: #e2e8f0; font-size: 0.95em; }
-  .step-sub { font-size: 0.75em; color: #94a3b8; }
-
-  /* Rules list */
   .rules-list { list-style: none; padding: 0; margin: 0; }
-  .rules-list li { display: flex; align-items: flex-start; gap: 12px; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.06); font-size: 0.85em; }
+  .rules-list li { display: flex; align-items: flex-start; gap: 12px; padding: 9px 0; border-bottom: 1px solid rgba(255,255,255,0.06); font-size: 0.82em; line-height: 1.5; }
   .rules-list li:last-child { border-bottom: none; }
-  .rules-list .icon { font-size: 1.2em; min-width: 28px; }
+  .rules-list .icon { font-size: 1.1em; min-width: 26px; margin-top: 1px; }
 
-  /* Callout box */
-  .callout { background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.3); border-radius: 12px; padding: 20px 24px; margin-top: 1em; }
+  .callout { background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.3); border-radius: 12px; padding: 16px 20px; margin-top: 1em; font-size: 0.82em; line-height: 1.55; }
   .callout.green { background: rgba(34,197,94,0.1); border-color: rgba(34,197,94,0.3); }
   .callout.orange { background: rgba(249,115,22,0.1); border-color: rgba(249,115,22,0.3); }
 
-  /* Week plan */
-  .week-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; font-size: 0.72em; }
-  .week-day { background: rgba(255,255,255,0.04); border-radius: 10px; padding: 12px 10px; text-align: center; }
-  .week-day .day-name { font-weight: 700; color: var(--emage-blue); font-size: 1em; margin-bottom: 6px; }
-  .week-day .day-task { color: #cbd5e1; line-height: 1.4; }
+  .chip-list { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 7px; }
+  .chip { background: rgba(59,130,246,0.15); border: 1px solid rgba(59,130,246,0.3); color: #93c5fd; padding: 3px 12px; border-radius: 20px; font-size: 0.72em; font-weight: 600; }
 
-  /* Tool chips */
-  .chip-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 0.8em; }
-  .chip { background: rgba(59,130,246,0.15); border: 1px solid rgba(59,130,246,0.3); color: #93c5fd; padding: 4px 14px; border-radius: 20px; font-size: 0.75em; font-weight: 600; }
+  .salary-bar { margin: 7px 0; }
+  .salary-bar .bar-label { font-size: 0.78em; color: #94a3b8; margin-bottom: 3px; }
+  .salary-bar .bar-track { background: rgba(255,255,255,0.08); border-radius: 4px; height: 26px; overflow: hidden; }
+  .salary-bar .bar-fill { height: 100%; border-radius: 4px; display: flex; align-items: center; padding-left: 10px; font-size: 0.78em; font-weight: 700; color: #fff; }
 
-  /* Big quote */
-  .big-quote { font-size: 1.6em; font-style: italic; color: #e2e8f0; line-height: 1.4; border-left: 4px solid var(--emage-blue); padding-left: 0.6em; }
+  .section-header { font-size: 0.72em; text-transform: uppercase; letter-spacing: 0.12em; color: var(--blue); margin-bottom: 0.25em; font-weight: 700; }
 
-  .reveal section { padding: 30px 50px; }
-  .reveal ul { margin-left: 1em; }
-  .reveal ul li { margin-bottom: 0.4em; }
-  .section-header { font-size: 0.75em; text-transform: uppercase; letter-spacing: 0.12em; color: var(--emage-blue); margin-bottom: 0.3em; font-weight: 700; }
-  .reveal .slide-number { font-size: 0.7em; }
+  /* Team card */
+  .team-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 0.8em; }
+  .team-card { background: rgba(255,255,255,0.04); border-radius: 12px; padding: 16px 18px; }
+  .team-card .role { font-size: 0.68em; text-transform: uppercase; letter-spacing: 0.1em; color: #64748b; font-weight: 700; margin-bottom: 5px; }
+  .team-card .name { font-size: 1em; font-weight: 700; color: #e2e8f0; }
+  .team-card .desc { font-size: 0.75em; color: #94a3b8; margin-top: 4px; line-height: 1.4; }
+  .team-card.lead { border: 1px solid rgba(59,130,246,0.4); }
+  .team-card.deputy { border: 1px solid rgba(168,85,247,0.35); }
+  .team-card.ta { border: 1px solid rgba(34,197,94,0.3); }
+
+  /* Study commitment */
+  .commit-box { background: rgba(249,115,22,0.1); border: 1px solid rgba(249,115,22,0.35); border-radius: 12px; padding: 20px 24px; text-align: center; margin: 0.8em 0; }
+  .commit-box .hours { font-size: 3em; font-weight: 800; color: var(--orange); line-height: 1; }
+  .commit-box .hours-label { font-size: 0.85em; color: #cbd5e1; margin-top: 4px; }
+
+  /* Fix bottom rendering - ensure nothing is cut off */
+  .reveal .slides section { height: auto !important; overflow: visible; }
 </style>
 </head>
 <body>
 <div class="reveal">
 <div class="slides">
 
-<!-- ═══════════════════════════════════════════
-     SLIDE 1 — TITLE
-════════════════════════════════════════════ -->
-<section class="title-slide">
+<!-- SLIDE 1 — TITLE -->
+<section style="background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 50%, #0f172a 100%); display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; height:100vh;">
   <div class="emage-badge">EMAGETECH</div>
-  <h1>Kubernetes Cohort<br/>Kickoff Session</h1>
-  <div class="subtitle">January 2026 Cohort — Class Begins Today</div>
-  <div class="date">April 15, 2026 &nbsp;·&nbsp; Presented by Kenna Ofoegbu</div>
-  <br/>
-  <div style="font-size:0.8em; color:#475569; margin-top:1.5em;">
-    📌 Session recording will be linked in Slack after the call
-  </div>
+  <h1 style="font-size:2.2em; font-weight:800; color:#fff; margin:0 0 0.2em;">Kubernetes Cohort<br/>Kickoff Session</h1>
+  <div style="font-size:1.05em; color:#93c5fd; margin-bottom:0.4em;">January 2026 Cohort &mdash; Class Begins Today</div>
+  <div style="font-size:0.85em; color:#475569;">April 15, 2026 &nbsp;&middot;&nbsp; Emagetech</div>
+  <div style="font-size:0.75em; color:#334155; margin-top:1.5em;">Recording will be linked in Slack after the session</div>
 </section>
 
-<!-- ═══════════════════════════════════════════
-     SLIDE 2 — AGENDA
-════════════════════════════════════════════ -->
+<!-- SLIDE 2 — AGENDA -->
 <section>
-  <div class="section-header">Today's Session</div>
-  <h2>What We're Covering</h2>
-  <div class="journey-steps">
-    <div class="journey-step">
-      <div class="step-num">👋</div>
-      <div><div class="step-title">Introductions</div><div class="step-sub">Who's in the room and where everyone's coming from</div></div>
-    </div>
-    <div class="journey-step">
-      <div class="step-num">📊</div>
-      <div><div class="step-title">Why Kubernetes, Why Now</div><div class="step-sub">The market data behind this skill set</div></div>
-    </div>
-    <div class="journey-step">
-      <div class="step-num">🗺️</div>
-      <div><div class="step-title">Curriculum Walkthrough</div><div class="step-sub">30 sessions, 29 projects, the full journey</div></div>
-    </div>
-    <div class="journey-step">
-      <div class="step-num">🎯</div>
-      <div><div class="step-title">How to Succeed in This Cohort</div><div class="step-sub">Weekly rhythm, accountability, support systems</div></div>
-    </div>
-    <div class="journey-step">
-      <div class="step-num">❓</div>
-      <div><div class="step-title">Q&A</div><div class="step-sub">Open floor — no question is too basic</div></div>
-    </div>
-  </div>
+  <div class="section-header">Today</div>
+  <h2>What We Are Covering</h2>
+  <div class="journey-step"><div class="step-num">👋</div><div><div class="step-title">Introductions</div><div class="step-sub">Who is in the room and where everyone is coming from</div></div></div>
+  <div class="journey-step"><div class="step-num">📊</div><div><div class="step-title">Why Kubernetes, Why Now</div><div class="step-sub">The market data behind this skill set</div></div></div>
+  <div class="journey-step"><div class="step-num">👥</div><div><div class="step-title">Meet the Team</div><div class="step-sub">Your trainer, deputy, and teaching assistants</div></div></div>
+  <div class="journey-step"><div class="step-num">🗺️</div><div><div class="step-title">Curriculum Walkthrough</div><div class="step-sub">Olu Alade will walk through the full curriculum after this session</div></div></div>
+  <div class="journey-step"><div class="step-num">🎯</div><div><div class="step-title">How to Succeed</div><div class="step-sub">Commitment, support systems, and expectations</div></div></div>
+  <div class="journey-step"><div class="step-num">❓</div><div><div class="step-title">Q&amp;A</div><div class="step-sub">Open floor &mdash; no question is too basic</div></div></div>
 </section>
 
-<!-- ═══════════════════════════════════════════
-     SLIDE 3 — MARKET DATA
-════════════════════════════════════════════ -->
+<!-- SLIDE 3 — MARKET DATA -->
 <section>
-  <div class="section-header">Why You're Here</div>
+  <div class="section-header">Why You Are Here</div>
   <h2>The Kubernetes Job Market</h2>
-  <p style="font-size:0.8em; color:#94a3b8;">Source: kube.careers — State of Kubernetes Jobs Q3 2025</p>
+  <p style="font-size:0.75em; color:#94a3b8; margin:0 0 0.6em;">Source: kube.careers &mdash; State of Kubernetes Jobs Q3 2025</p>
   <div class="stat-grid">
     <div class="stat-card">
       <div class="number">$177K</div>
@@ -151,34 +110,62 @@
     </div>
     <div class="stat-card">
       <div class="number">+4.9%</div>
-      <div class="label">YoY salary growth<br/>Beats inflation (3.1%)</div>
+      <div class="label">Year-over-year growth<br/>Beats inflation (3.1%)</div>
     </div>
     <div class="stat-card">
       <div class="number">+15%</div>
-      <div class="label">Salary growth<br/>Europe YoY</div>
+      <div class="label">Salary growth<br/>Europe year-over-year</div>
     </div>
   </div>
-  <br/>
-  <div class="salary-bar">
-    <div class="bar-label">51% of roles pay $100k–$180k</div>
-    <div class="bar-track"><div class="bar-fill" style="width:51%; background:var(--emage-blue);">51%</div></div>
-  </div>
-  <div class="salary-bar">
-    <div class="bar-label">33% pay $180k–$240k</div>
-    <div class="bar-track"><div class="bar-fill" style="width:33%; background:var(--emage-purple);">33%</div></div>
-  </div>
-  <div class="salary-bar">
-    <div class="bar-label">5.7% pay $240k–$300k</div>
-    <div class="bar-track"><div class="bar-fill" style="width:10%; background:var(--emage-orange);">5.7%</div></div>
+  <div style="margin-top:1em;">
+    <div class="salary-bar"><div class="bar-label">51% of roles pay $100k&ndash;$180k</div><div class="bar-track"><div class="bar-fill" style="width:51%; background:var(--blue);">51%</div></div></div>
+    <div class="salary-bar"><div class="bar-label">33% pay $180k&ndash;$240k</div><div class="bar-track"><div class="bar-fill" style="width:33%; background:var(--purple);">33%</div></div></div>
+    <div class="salary-bar"><div class="bar-label">5.7% pay $240k&ndash;$300k</div><div class="bar-track"><div class="bar-fill" style="width:15%; background:var(--orange);">5.7%</div></div></div>
   </div>
 </section>
 
-<!-- ═══════════════════════════════════════════
-     SLIDE 4 — WHAT YOU'LL BUILD
-════════════════════════════════════════════ -->
+<!-- SLIDE 4 — MEET THE TEAM -->
+<section>
+  <div class="section-header">Your Team</div>
+  <h2>Meet the People Behind This Cohort</h2>
+  <div class="team-grid">
+    <div class="team-card lead">
+      <div class="role">Main Trainer</div>
+      <div class="name">Olu Alade</div>
+      <div class="desc">Leads all sessions and the curriculum. Your primary point of contact for the class.</div>
+    </div>
+    <div class="team-card deputy">
+      <div class="role">Deputy Trainer</div>
+      <div class="name">Dare Oke</div>
+      <div class="desc">Supports Olu in sessions and steps in when needed. Available for escalations.</div>
+    </div>
+    <div class="team-card ta">
+      <div class="role">Teaching Assistant</div>
+      <div class="name">David Asamoah</div>
+      <div class="desc">Lab support, office hours, and student blockers.</div>
+    </div>
+    <div class="team-card ta">
+      <div class="role">Teaching Assistant</div>
+      <div class="name">Idris Fagbemi</div>
+      <div class="desc">Lab support, office hours, and student blockers.</div>
+    </div>
+  </div>
+  <div style="margin-top:12px;">
+    <div class="team-card ta" style="border-color:rgba(34,197,94,0.3);">
+      <div class="role">Teaching Assistant</div>
+      <div class="name">Abiola</div>
+      <div class="desc">Lab support, office hours, and student blockers.</div>
+    </div>
+  </div>
+  <div style="margin-top:10px; background:rgba(255,255,255,0.03); border-radius:10px; padding:10px 14px; font-size:0.75em; color:#64748b;">
+    + Previous cohort graduates may join ad hoc to support students and share their experience
+  </div>
+</section>
+
+<!-- SLIDE 5 — WHAT YOU WILL BUILD -->
 <section>
   <div class="section-header">The Outcome</div>
-  <h2>What You'll Have When You're Done</h2>
+  <h2>What You Will Have When You Are Done</h2>
   <div class="stat-grid" style="margin-bottom:1em;">
     <div class="stat-card">
       <div class="number">30</div>
@@ -193,66 +180,60 @@
       <div class="label">Real-World Projects</div>
     </div>
   </div>
-  <div class="callout green" style="font-size:0.85em;">
-    <strong>🎯 The goal:</strong> By graduation you will have a GitHub portfolio of real, deployed, production-grade Kubernetes infrastructure that you can demo in any interview. Not tutorials. Not certificates. <strong>Working systems you built yourself.</strong>
+  <div class="callout green">
+    <strong>The goal:</strong> By graduation you will have a GitHub portfolio of real, deployed, production-grade Kubernetes infrastructure that you can demo in any interview. Not tutorials. Not certificates alone. <strong>Working systems you built yourself.</strong>
   </div>
 </section>
 
-<!-- ═══════════════════════════════════════════
-     SLIDE 5 — CURRICULUM PART 1
-════════════════════════════════════════════ -->
+<!-- SLIDE 6 — CURRICULUM PART 1 -->
 <section>
-  <div class="section-header">Curriculum</div>
-  <h2>Part 1 — Docker & Containers</h2>
-  <p style="font-size:0.8em; color:#94a3b8; margin-bottom:0.8em;">Sessions 1–10 · Foundation layer — everything Kubernetes runs on top of</p>
+  <div class="section-header">Curriculum &mdash; Part 1</div>
+  <h2>Docker &amp; Containers &mdash; Sessions 1&ndash;10</h2>
+  <p style="font-size:0.75em; color:#94a3b8; margin:0 0 0.7em;">Foundation layer &mdash; everything Kubernetes runs on top of</p>
   <div class="proj-grid">
-    <div class="proj-item"><div class="pnum">Session 1</div><div class="ptitle">Why Docker — VMs vs Containers</div></div>
-    <div class="proj-item"><div class="pnum">Session 2</div><div class="ptitle">Docker Architecture & Internals</div></div>
+    <div class="proj-item"><div class="pnum">Session 1</div><div class="ptitle">Why Docker &mdash; VMs vs Containers</div></div>
+    <div class="proj-item"><div class="pnum">Session 2</div><div class="ptitle">Docker Architecture &amp; Internals</div></div>
     <div class="proj-item"><div class="pnum">Session 3</div><div class="ptitle">Running Containers</div></div>
-    <div class="proj-item"><div class="pnum">Session 4</div><div class="ptitle">Images Deep Dive & Registries</div></div>
+    <div class="proj-item"><div class="pnum">Session 4</div><div class="ptitle">Images Deep Dive &amp; Registries</div></div>
     <div class="proj-item"><div class="pnum">Session 5</div><div class="ptitle">Dockerfile Best Practices</div></div>
     <div class="proj-item"><div class="pnum">Session 6</div><div class="ptitle">Docker Networking</div></div>
-    <div class="proj-item"><div class="pnum">Session 7</div><div class="ptitle">Docker Volumes & Persistence</div></div>
-    <div class="proj-item"><div class="pnum">Session 8</div><div class="ptitle">Docker Compose & Multi-Container Apps</div></div>
-    <div class="proj-item"><div class="pnum">Session 9</div><div class="ptitle">Container Internals (namespaces, cgroups)</div></div>
+    <div class="proj-item"><div class="pnum">Session 7</div><div class="ptitle">Docker Volumes &amp; Persistence</div></div>
+    <div class="proj-item"><div class="pnum">Session 8</div><div class="ptitle">Docker Compose &amp; Multi-Container Apps</div></div>
+    <div class="proj-item"><div class="pnum">Session 9</div><div class="ptitle">Container Internals</div></div>
     <div class="proj-item"><div class="pnum">Session 10</div><div class="ptitle">Container Security Fundamentals</div></div>
   </div>
 </section>
 
-<!-- ═══════════════════════════════════════════
-     SLIDE 6 — CURRICULUM PART 2 (core K8s)
-════════════════════════════════════════════ -->
+<!-- SLIDE 7 — CURRICULUM PART 2 CORE -->
 <section>
-  <div class="section-header">Curriculum</div>
-  <h2>Part 2 — Kubernetes Core</h2>
-  <p style="font-size:0.8em; color:#94a3b8; margin-bottom:0.8em;">Sessions 11–20 · The foundation of every Kubernetes engineer</p>
+  <div class="section-header">Curriculum &mdash; Part 2</div>
+  <h2>Kubernetes Core &mdash; Sessions 11&ndash;20</h2>
+  <p style="font-size:0.75em; color:#94a3b8; margin:0 0 0.7em;">The foundation of every Kubernetes engineer</p>
   <div class="proj-grid">
-    <div class="proj-item"><div class="pnum">Session 11</div><div class="ptitle">Cluster Architecture & Components</div></div>
+    <div class="proj-item"><div class="pnum">Session 11</div><div class="ptitle">Cluster Architecture &amp; Components</div></div>
     <div class="proj-item"><div class="pnum">Session 12</div><div class="ptitle">kubectl Mastery</div></div>
-    <div class="proj-item"><div class="pnum">Session 13</div><div class="ptitle">API Objects & CRDs</div></div>
-    <div class="proj-item"><div class="pnum">Session 14</div><div class="ptitle">Pod Lifecycle & Probes</div></div>
-    <div class="proj-item"><div class="pnum">Session 15</div><div class="ptitle">ConfigMaps & Secrets</div></div>
-    <div class="proj-item"><div class="pnum">Session 16</div><div class="ptitle">Pod Controllers (Deploy, STS, DS, Job)</div></div>
+    <div class="proj-item"><div class="pnum">Session 13</div><div class="ptitle">API Objects &amp; CRDs</div></div>
+    <div class="proj-item"><div class="pnum">Session 14</div><div class="ptitle">Pod Lifecycle &amp; Probes</div></div>
+    <div class="proj-item"><div class="pnum">Session 15</div><div class="ptitle">ConfigMaps &amp; Secrets</div></div>
+    <div class="proj-item"><div class="pnum">Session 16</div><div class="ptitle">Pod Controllers &mdash; Deploy, STS, DS, Job</div></div>
     <div class="proj-item"><div class="pnum">Session 17</div><div class="ptitle">Network Policies</div></div>
     <div class="proj-item"><div class="pnum">Session 18</div><div class="ptitle">Gateway API</div></div>
     <div class="proj-item"><div class="pnum">Session 19</div><div class="ptitle">Platform Add-ons (cert-manager)</div></div>
-    <div class="proj-item"><div class="pnum">Session 20</div><div class="ptitle">Storage & PersistentVolumes</div></div>
+    <div class="proj-item"><div class="pnum">Session 20</div><div class="ptitle">Storage &amp; PersistentVolumes</div></div>
   </div>
 </section>
 
-<!-- ═══════════════════════════════════════════
-     SLIDE 7 — CURRICULUM PART 2 (advanced)
-════════════════════════════════════════════ -->
+<!-- SLIDE 8 — CURRICULUM PART 2 ADVANCED -->
 <section>
-  <div class="section-header">Curriculum</div>
-  <h2>Part 2 — Kubernetes Advanced</h2>
-  <p style="font-size:0.8em; color:#94a3b8; margin-bottom:0.8em;">Sessions 21–30 · Production-grade operations</p>
+  <div class="section-header">Curriculum &mdash; Part 2</div>
+  <h2>Kubernetes Advanced &mdash; Sessions 21&ndash;30</h2>
+  <p style="font-size:0.75em; color:#94a3b8; margin:0 0 0.7em;">Production-grade operations &mdash; what separates engineers from admins</p>
   <div class="proj-grid">
-    <div class="proj-item"><div class="pnum">Session 21</div><div class="ptitle">RBAC & Workload Identity</div></div>
-    <div class="proj-item"><div class="pnum">Session 22</div><div class="ptitle">Troubleshooting & Debugging</div></div>
-    <div class="proj-item"><div class="pnum">Session 23</div><div class="ptitle">Scaling & Topology Spread</div></div>
+    <div class="proj-item"><div class="pnum">Session 21</div><div class="ptitle">RBAC &amp; Workload Identity</div></div>
+    <div class="proj-item"><div class="pnum">Session 22</div><div class="ptitle">Troubleshooting &amp; Debugging</div></div>
+    <div class="proj-item"><div class="pnum">Session 23</div><div class="ptitle">Scaling &amp; Topology Spread</div></div>
     <div class="proj-item"><div class="pnum">Session 24</div><div class="ptitle">Helm Chart Development</div></div>
-    <div class="proj-item"><div class="pnum">Session 25</div><div class="ptitle">Observability (Prometheus + OTel)</div></div>
+    <div class="proj-item"><div class="pnum">Session 25</div><div class="ptitle">Observability &mdash; Prometheus &amp; OpenTelemetry</div></div>
     <div class="proj-item"><div class="pnum">Session 26</div><div class="ptitle">GitOps with ArgoCD</div></div>
     <div class="proj-item"><div class="pnum">Session 27</div><div class="ptitle">Istio Traffic Management</div></div>
     <div class="proj-item"><div class="pnum">Session 28</div><div class="ptitle">Policy-as-Code with Kyverno</div></div>
@@ -261,301 +242,188 @@
   </div>
 </section>
 
-<!-- ═══════════════════════════════════════════
-     SLIDE 8 — PROJECTS OVERVIEW
-════════════════════════════════════════════ -->
+<!-- SLIDE 9 — PROJECTS -->
 <section>
   <div class="section-header">Projects</div>
-  <h2>29 Projects — Built for the Job Market</h2>
-  <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px; font-size:0.78em; margin-top:0.8em;">
-    <div style="background:rgba(34,197,94,0.08); border:1px solid rgba(34,197,94,0.3); border-radius:12px; padding:16px;">
-      <div style="color:#4ade80; font-weight:800; font-size:1.1em; margin-bottom:8px;">🟢 JUNIOR (1–4)</div>
-      <div style="color:#cbd5e1; line-height:1.7;">
-        01 Containerize Multi-Tier App<br/>
-        02 YAML Template Library<br/>
-        03 Namespace &amp; RBAC<br/>
-        04 Self-Healing &amp; HPA
-      </div>
-      <div style="color:#64748b; font-size:0.85em; margin-top:8px;">Individual · Build confidence</div>
+  <h2>29 Projects &mdash; Built for the Job Market</h2>
+  <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; font-size:0.76em; margin-top:0.8em;">
+    <div style="background:rgba(34,197,94,0.08); border:1px solid rgba(34,197,94,0.3); border-radius:12px; padding:14px;">
+      <div style="color:#4ade80; font-weight:800; margin-bottom:7px;">🟢 JUNIOR (1&ndash;4)</div>
+      <div style="color:#cbd5e1; line-height:1.7;">Containerize App<br/>YAML Library<br/>Namespace &amp; RBAC<br/>Self-Healing &amp; HPA</div>
+      <div style="color:#64748b; font-size:0.85em; margin-top:7px;">Individual work</div>
     </div>
-    <div style="background:rgba(234,179,8,0.08); border:1px solid rgba(234,179,8,0.3); border-radius:12px; padding:16px;">
-      <div style="color:#fbbf24; font-weight:800; font-size:1.1em; margin-bottom:8px;">🟡 MID-LEVEL (5–10)</div>
-      <div style="color:#cbd5e1; line-height:1.7;">
-        05 GitOps with ArgoCD<br/>
-        06 Helm Chart Authoring<br/>
-        07 Secrets &amp; Supply Chain<br/>
-        08 Observability Stack<br/>
-        09 Zero-Downtime Deploys<br/>
-        10 Policy-as-Code
-      </div>
-      <div style="color:#64748b; font-size:0.85em; margin-top:8px;">Pairs · Production patterns</div>
+    <div style="background:rgba(234,179,8,0.08); border:1px solid rgba(234,179,8,0.3); border-radius:12px; padding:14px;">
+      <div style="color:#fbbf24; font-weight:800; margin-bottom:7px;">🟡 MID-LEVEL (5&ndash;10)</div>
+      <div style="color:#cbd5e1; line-height:1.7;">GitOps + ArgoCD<br/>Helm Authoring<br/>Secrets &amp; Security<br/>Observability Stack<br/>Zero-Downtime Deploys<br/>Policy-as-Code</div>
+      <div style="color:#64748b; font-size:0.85em; margin-top:7px;">Pairs</div>
     </div>
-    <div style="background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.3); border-radius:12px; padding:16px;">
-      <div style="color:#f87171; font-weight:800; font-size:1.1em; margin-bottom:8px;">🔴 SENIOR (11–29)</div>
-      <div style="color:#cbd5e1; line-height:1.7;">
-        11–15 Real-world ops<br/>
-        16–21 Platform builder<br/>
-        22–29 Staff/Principal level<br/>
-        <br/>
-        Terraform · Operators<br/>
-        Backstage IDP · Cilium<br/>
-        SLOs · FinOps · DR
-      </div>
-      <div style="color:#64748b; font-size:0.85em; margin-top:8px;">Teams · Portfolio pieces</div>
+    <div style="background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.3); border-radius:12px; padding:14px;">
+      <div style="color:#f87171; font-weight:800; margin-bottom:7px;">🔴 SENIOR (11&ndash;29)</div>
+      <div style="color:#cbd5e1; line-height:1.7;">Security Hardening<br/>IDP + Backstage<br/>Terraform Provisioning<br/>Kubernetes Operator<br/>FinOps + SLOs<br/>Full Capstone</div>
+      <div style="color:#64748b; font-size:0.85em; margin-top:7px;">Teams of 2&ndash;3</div>
     </div>
   </div>
 </section>
 
-<!-- ═══════════════════════════════════════════
-     SLIDE 9 — THE TOOLCHAIN
-════════════════════════════════════════════ -->
+<!-- SLIDE 10 — TOOLCHAIN -->
 <section>
   <div class="section-header">Toolchain</div>
-  <h2>What You'll Be Proficient In</h2>
-  <div style="font-size:0.85em; color:#94a3b8; margin-bottom:0.6em;">These are the tools on every senior K8s job description</div>
-
-  <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; font-size:0.8em;">
+  <h2>What You Will Be Proficient In</h2>
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; font-size:0.78em;">
     <div>
-      <div style="color:#3b82f6; font-weight:700; margin-bottom:6px;">Container & Cluster</div>
+      <div style="color:#3b82f6; font-weight:700; margin-bottom:5px;">Container &amp; Cluster</div>
       <div class="chip-list">
-        <span class="chip">Docker</span><span class="chip">Kubernetes</span><span class="chip">GKE</span>
-        <span class="chip">EKS</span><span class="chip">AKS</span><span class="chip">kubectl</span><span class="chip">k9s</span>
+        <span class="chip">Docker</span><span class="chip">Kubernetes</span><span class="chip">GKE</span><span class="chip">EKS</span><span class="chip">AKS</span><span class="chip">kubectl</span><span class="chip">k9s</span>
       </div>
     </div>
     <div>
-      <div style="color:#a855f7; font-weight:700; margin-bottom:6px;">GitOps & Delivery</div>
+      <div style="color:#a855f7; font-weight:700; margin-bottom:5px;">GitOps &amp; Delivery</div>
       <div class="chip-list">
-        <span class="chip" style="border-color:rgba(168,85,247,0.3); color:#c084fc;">ArgoCD</span>
-        <span class="chip" style="border-color:rgba(168,85,247,0.3); color:#c084fc;">Helm</span>
-        <span class="chip" style="border-color:rgba(168,85,247,0.3); color:#c084fc;">GitHub Actions</span>
-        <span class="chip" style="border-color:rgba(168,85,247,0.3); color:#c084fc;">Terraform</span>
+        <span class="chip" style="border-color:rgba(168,85,247,0.3); color:#c084fc;">ArgoCD</span><span class="chip" style="border-color:rgba(168,85,247,0.3); color:#c084fc;">Helm</span><span class="chip" style="border-color:rgba(168,85,247,0.3); color:#c084fc;">GitHub Actions</span><span class="chip" style="border-color:rgba(168,85,247,0.3); color:#c084fc;">Terraform</span>
       </div>
     </div>
     <div>
-      <div style="color:#22c55e; font-weight:700; margin-bottom:6px;">Observability</div>
+      <div style="color:#22c55e; font-weight:700; margin-bottom:5px;">Observability</div>
       <div class="chip-list">
-        <span class="chip" style="border-color:rgba(34,197,94,0.3); color:#4ade80;">Prometheus</span>
-        <span class="chip" style="border-color:rgba(34,197,94,0.3); color:#4ade80;">Grafana</span>
-        <span class="chip" style="border-color:rgba(34,197,94,0.3); color:#4ade80;">Loki</span>
-        <span class="chip" style="border-color:rgba(34,197,94,0.3); color:#4ade80;">AlertManager</span>
-        <span class="chip" style="border-color:rgba(34,197,94,0.3); color:#4ade80;">OpenTelemetry</span>
+        <span class="chip" style="border-color:rgba(34,197,94,0.3); color:#4ade80;">Prometheus</span><span class="chip" style="border-color:rgba(34,197,94,0.3); color:#4ade80;">Grafana</span><span class="chip" style="border-color:rgba(34,197,94,0.3); color:#4ade80;">Loki</span><span class="chip" style="border-color:rgba(34,197,94,0.3); color:#4ade80;">AlertManager</span><span class="chip" style="border-color:rgba(34,197,94,0.3); color:#4ade80;">OpenTelemetry</span>
       </div>
     </div>
     <div>
-      <div style="color:#ef4444; font-weight:700; margin-bottom:6px;">Security</div>
+      <div style="color:#ef4444; font-weight:700; margin-bottom:5px;">Security</div>
       <div class="chip-list">
-        <span class="chip" style="border-color:rgba(239,68,68,0.3); color:#f87171;">Kyverno</span>
-        <span class="chip" style="border-color:rgba(239,68,68,0.3); color:#f87171;">NeuVector</span>
-        <span class="chip" style="border-color:rgba(239,68,68,0.3); color:#f87171;">Sealed Secrets</span>
-        <span class="chip" style="border-color:rgba(239,68,68,0.3); color:#f87171;">Cosign</span>
-        <span class="chip" style="border-color:rgba(239,68,68,0.3); color:#f87171;">Cilium</span>
+        <span class="chip" style="border-color:rgba(239,68,68,0.3); color:#f87171;">Kyverno</span><span class="chip" style="border-color:rgba(239,68,68,0.3); color:#f87171;">NeuVector</span><span class="chip" style="border-color:rgba(239,68,68,0.3); color:#f87171;">Sealed Secrets</span><span class="chip" style="border-color:rgba(239,68,68,0.3); color:#f87171;">Cosign</span><span class="chip" style="border-color:rgba(239,68,68,0.3); color:#f87171;">Cilium</span>
       </div>
     </div>
   </div>
+  <div class="callout" style="margin-top:1em;">
+    These are the tools on every senior Kubernetes job description. You will use all of them in the projects.
+  </div>
 </section>
 
-<!-- ═══════════════════════════════════════════
-     SLIDE 10 — WEEKLY RHYTHM
-════════════════════════════════════════════ -->
+<!-- SLIDE 11 — STUDY COMMITMENT -->
 <section>
-  <div class="section-header">How to Succeed</div>
-  <h2>Your Weekly Rhythm</h2>
-  <div class="week-grid">
-    <div class="week-day">
-      <div class="day-name">MON</div>
-      <div class="day-task">Post weekly<br/>check-in in Slack</div>
+  <div class="section-header">Your Commitment</div>
+  <h2>What It Takes to Succeed</h2>
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-top:0.8em; align-items:start;">
+    <div>
+      <div class="commit-box">
+        <div class="hours">5&ndash;10</div>
+        <div class="hours-label">Extra hours of study per week<br/>on top of class sessions</div>
+      </div>
+      <div style="font-size:0.78em; color:#94a3b8; text-align:center; margin-top:8px;">This is what separates students who get placed from students who drift</div>
     </div>
-    <div class="week-day">
-      <div class="day-name">TUE</div>
-      <div class="day-task">TA Office Hours<br/>7 PM CST<br/>Drop-in</div>
+    <div>
+      <ul class="rules-list">
+        <li><span class="icon">📅</span><div><strong>Attend every session.</strong> If you miss one, watch the recording within 48 hours.</div></li>
+        <li><span class="icon">✅</span><div><strong>Complete labs weekly.</strong> Falling behind compounds fast.</div></li>
+        <li><span class="icon">🐙</span><div><strong>Push work to GitHub.</strong> Your commit history is your portfolio.</div></li>
+        <li><span class="icon">💬</span><div><strong>Post in Slack weekly.</strong> Visibility and communication matter.</div></li>
+        <li><span class="icon">🙋</span><div><strong>Ask for help early.</strong> 30 min stuck? Post in Slack immediately.</div></li>
+      </ul>
     </div>
-    <div class="week-day">
-      <div class="day-name">WED</div>
-      <div class="day-task">🎓 CLASS<br/>SESSION<br/>Mandatory</div>
-    </div>
-    <div class="week-day">
-      <div class="day-name">THU</div>
-      <div class="day-task">Work on<br/>week's lab</div>
-    </div>
-    <div class="week-day">
-      <div class="day-name">FRI</div>
-      <div class="day-task">✅ Lab due<br/>Push to GitHub<br/>Post completion</div>
-    </div>
-  </div>
-  <div class="callout" style="margin-top:1.2em; font-size:0.82em;">
-    <strong>⏱️ The 30-minute rule:</strong> If you've been stuck on something for 30 minutes — post in Slack immediately. Don't suffer in silence for 3 days and fall behind. A 5-minute conversation solves what 3 days of struggle doesn't.
   </div>
 </section>
 
-<!-- ═══════════════════════════════════════════
-     SLIDE 11 — SUPPORT SYSTEMS
-════════════════════════════════════════════ -->
+<!-- SLIDE 12 — SUPPORT SYSTEMS -->
 <section>
   <div class="section-header">Support</div>
-  <h2>You're Not Doing This Alone</h2>
+  <h2>You Are Not Doing This Alone</h2>
   <ul class="rules-list">
     <li>
-      <span class="icon">🧑‍🏫</span>
-      <div><strong>TA Office Hours</strong> — Tuesday 7PM + Saturday 10AM CST. Drop in with anything. No appointment, no judgment.</div>
+      <span class="icon">🧑&#x200D;🏫</span>
+      <div><strong>Office Hours</strong> &mdash; TBD. Drop-in sessions with TAs. Post blockers in Slack any time and expect a response within 24 hours.</div>
     </li>
     <li>
       <span class="icon">👥</span>
-      <div><strong>Peer Study Groups</strong> — You'll be placed in a group of 3. One 30-min call per week. Accountability makes the difference.</div>
+      <div><strong>Peer Study Groups</strong> &mdash; You will be placed in a group of 3 students. One 30-min check-in call per week. Accountability makes the difference.</div>
     </li>
     <li>
       <span class="icon">💬</span>
-      <div><strong>Slack Channel</strong> — Active 7 days a week. TAs respond within 24 hours. Post questions, wins, blockers — all of it.</div>
+      <div><strong>Slack Channel</strong> &mdash; Active 7 days a week. TAs and trainers respond within 24 hours. Post questions, wins, and blockers.</div>
     </li>
     <li>
       <span class="icon">📄</span>
-      <div><strong>Resume Review</strong> — Every student gets a full resume review before applying. No one submits an unreviewed resume.</div>
+      <div><strong>Resume Review</strong> &mdash; Every student gets a full resume review before applying. No one submits an unreviewed resume.</div>
     </li>
     <li>
       <span class="icon">🎙️</span>
-      <div><strong>Mock Interviews</strong> — Every student does at least one mock technical interview before job searching. Find the gaps before they cost you an offer.</div>
+      <div><strong>Mock Interviews</strong> &mdash; Every student does at least one mock technical interview before job searching.</div>
     </li>
     <li>
       <span class="icon">🏆</span>
-      <div><strong>Placement Support</strong> — Kenna and TAs as references. Referral network. Alumni who'll connect you inside companies.</div>
+      <div><strong>Placement Support</strong> &mdash; References, referral network, and alumni connections inside companies that are hiring.</div>
     </li>
   </ul>
 </section>
 
-<!-- ═══════════════════════════════════════════
-     SLIDE 12 — EXPECTATIONS
-════════════════════════════════════════════ -->
-<section>
-  <div class="section-header">Expectations</div>
-  <h2>What We Expect From You</h2>
-  <ul class="rules-list">
-    <li>
-      <span class="icon">📅</span>
-      <div><strong>Attend every class session.</strong> If you miss one, watch the recording within 48 hours — no exceptions.</div>
-    </li>
-    <li>
-      <span class="icon">✅</span>
-      <div><strong>Complete the lab in the same week as the session.</strong> Falling behind compounds fast. Stay current.</div>
-    </li>
-    <li>
-      <span class="icon">📢</span>
-      <div><strong>Post in Slack every week.</strong> Monday check-ins are non-negotiable. Visibility matters — for your learning and ours.</div>
-    </li>
-    <li>
-      <span class="icon">🐙</span>
-      <div><strong>Push your work to GitHub weekly.</strong> Your commit history is your portfolio. Make it green.</div>
-    </li>
-    <li>
-      <span class="icon">🙋</span>
-      <div><strong>Ask for help before you fall behind.</strong> 30-minute rule. Always.</div>
-    </li>
-  </ul>
-  <div class="callout orange" style="margin-top:1em; font-size:0.82em;">
-    <strong>The honest truth:</strong> The students who get jobs aren't the smartest in the room. They're the ones who show up every week, push through the hard parts, and ask for help when they need it.
-  </div>
-</section>
-
-<!-- ═══════════════════════════════════════════
-     SLIDE 13 — REPO & RESOURCES
-════════════════════════════════════════════ -->
+<!-- SLIDE 13 — REPO & RESOURCES -->
 <section>
   <div class="section-header">Resources</div>
   <h2>Everything Lives in the GitHub Repo</h2>
-  <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; font-size:0.82em; margin-top:0.8em;">
-    <div class="proj-item">
-      <div class="ptitle">📚 class-materials/</div>
-      <div class="pnum">Slides, labs, session notes — Sessions 11–30</div>
-    </div>
-    <div class="proj-item">
-      <div class="ptitle">🌐 network-fundamentals/</div>
-      <div class="pnum">8 networking tutorials — basics → K8s networking</div>
-    </div>
-    <div class="proj-item">
-      <div class="ptitle">🐙 git-fundamentals/</div>
-      <div class="pnum">8 Git tutorials — basics → GitOps with ArgoCD</div>
-    </div>
-    <div class="proj-item">
-      <div class="ptitle">🔨 projects/</div>
-      <div class="pnum">29 projects — Junior through Staff/Principal</div>
-    </div>
-    <div class="proj-item">
-      <div class="ptitle">💼 career/</div>
-      <div class="pnum">Resume guide, interview prep, job search, negotiation</div>
-    </div>
-    <div class="proj-item">
-      <div class="ptitle">🎓 student-success/</div>
-      <div class="pnum">Weekly rhythm, troubleshooting cheatsheet, mock interview rubric</div>
-    </div>
-    <div class="proj-item">
-      <div class="ptitle">🛠️ setup.sh</div>
-      <div class="pnum">One command installs all tools — kubectl, helm, argocd, k9s...</div>
-    </div>
-    <div class="proj-item">
-      <div class="ptitle">📋 CONTRIBUTING.md</div>
-      <div class="pnum">How to submit labs and projects via PR</div>
-    </div>
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; font-size:0.8em; margin-top:0.8em;">
+    <div class="proj-item"><div class="ptitle">class-materials/</div><div class="pnum">Slides, labs, session notes &mdash; Sessions 11&ndash;30</div></div>
+    <div class="proj-item"><div class="ptitle">network-fundamentals/</div><div class="pnum">8 networking tutorials from basics to K8s</div></div>
+    <div class="proj-item"><div class="ptitle">git-fundamentals/</div><div class="pnum">8 Git tutorials &mdash; basics to GitOps</div></div>
+    <div class="proj-item"><div class="ptitle">projects/</div><div class="pnum">29 projects &mdash; Junior through Senior</div></div>
+    <div class="proj-item"><div class="ptitle">career/</div><div class="pnum">Resume guide, interview prep, job search, negotiation</div></div>
+    <div class="proj-item"><div class="ptitle">student-success/</div><div class="pnum">Troubleshooting cheatsheet, mock interview rubric, study guides</div></div>
+    <div class="proj-item"><div class="ptitle">setup.sh</div><div class="pnum">One command installs all tools &mdash; kubectl, helm, argocd, k9s</div></div>
+    <div class="proj-item"><div class="ptitle">CONTRIBUTING.md</div><div class="pnum">How to submit labs and projects via pull request</div></div>
   </div>
-  <div style="text-align:center; margin-top:1em; font-size:0.8em; color:#64748b;">
-    🔗 github.com/emage-tech/kubernetes-january-2026-cohort
+  <div style="text-align:center; margin-top:1em; font-size:0.75em; color:#64748b;">
+    github.com/emage-tech/kubernetes-january-2026-cohort
   </div>
 </section>
 
-<!-- ═══════════════════════════════════════════
-     SLIDE 14 — CAREER PATH
-════════════════════════════════════════════ -->
+<!-- SLIDE 14 — CAREER PATH -->
 <section>
   <div class="section-header">The End Game</div>
-  <h2>Your Career Path from Here</h2>
-  <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:12px; font-size:0.78em; margin-top:0.8em;">
+  <h2>Your Career Path From Here</h2>
+  <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:12px; font-size:0.76em; margin-top:0.8em;">
     <div style="text-align:center; background:rgba(34,197,94,0.08); border:1px solid rgba(34,197,94,0.25); border-radius:12px; padding:14px 10px;">
-      <div style="font-size:1.8em;">🟢</div>
+      <div style="font-size:1.6em;">🟢</div>
       <div style="font-weight:700; color:#4ade80; margin:6px 0;">Junior</div>
-      <div style="color:#94a3b8;">Projects 1–4<br/>$85k–$115k</div>
+      <div style="color:#94a3b8; line-height:1.5;">Projects 1&ndash;4<br/>$85k&ndash;$115k</div>
     </div>
     <div style="text-align:center; background:rgba(234,179,8,0.08); border:1px solid rgba(234,179,8,0.25); border-radius:12px; padding:14px 10px;">
-      <div style="font-size:1.8em;">🟡</div>
+      <div style="font-size:1.6em;">🟡</div>
       <div style="font-weight:700; color:#fbbf24; margin:6px 0;">Mid-Level</div>
-      <div style="color:#94a3b8;">Projects 5–10<br/>$115k–$155k</div>
+      <div style="color:#94a3b8; line-height:1.5;">Projects 5&ndash;10<br/>$115k&ndash;$155k</div>
     </div>
     <div style="text-align:center; background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.25); border-radius:12px; padding:14px 10px;">
-      <div style="font-size:1.8em;">🔴</div>
+      <div style="font-size:1.6em;">🔴</div>
       <div style="font-weight:700; color:#f87171; margin:6px 0;">Senior</div>
-      <div style="color:#94a3b8;">Projects 11–21<br/>$155k–$200k+</div>
+      <div style="color:#94a3b8; line-height:1.5;">Projects 11&ndash;21<br/>$155k&ndash;$200k+</div>
     </div>
     <div style="text-align:center; background:rgba(168,85,247,0.08); border:1px solid rgba(168,85,247,0.25); border-radius:12px; padding:14px 10px;">
-      <div style="font-size:1.8em;">⭐</div>
+      <div style="font-size:1.6em;">⭐</div>
       <div style="font-weight:700; color:#c084fc; margin:6px 0;">Staff/Principal</div>
-      <div style="color:#94a3b8;">Projects 22–29<br/>$190k–$250k+</div>
+      <div style="color:#94a3b8; line-height:1.5;">Projects 22&ndash;29<br/>$190k&ndash;$250k+</div>
     </div>
   </div>
-  <div class="callout" style="margin-top:1.2em; font-size:0.83em;">
-    <strong>Our alumni work at some of the biggest companies in the world.</strong> They're making serious money. It will be you in a few months — put in your 100% and leave the rest to us.
+  <div class="callout" style="margin-top:1em;">
+    Our alumni work at some of the biggest companies in the world. They are making serious money. It will be you in a few months &mdash; put in your 100% and leave the rest to us.
   </div>
 </section>
 
-<!-- ═══════════════════════════════════════════
-     SLIDE 15 — CLOSING / Q&A
-════════════════════════════════════════════ -->
-<section>
-  <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:80vh; text-align:center;">
-    <div style="font-size:3em; margin-bottom:0.3em;">🚀</div>
-    <h2 style="font-size:2em; margin-bottom:0.3em;">Let's Get to Work</h2>
-    <p style="color:#94a3b8; max-width:600px; line-height:1.6; font-size:0.9em;">
-      You're already ahead of the curve just by being here. Now let's make it count.
-    </p>
-    <br/>
-    <div style="display:flex; gap:30px; font-size:0.85em; color:#64748b; flex-wrap:wrap; justify-content:center;">
-      <div>📌 Slack: <span style="color:#93c5fd;">#kubernetes-january-2026-cohort</span></div>
-      <div>🐙 GitHub: <span style="color:#93c5fd;">emage-tech/kubernetes-january-2026-cohort</span></div>
-      <div>📧 Contact: <span style="color:#93c5fd;">admin@emagegroup.net</span></div>
-    </div>
-    <br/><br/>
-    <div style="font-size:1.4em; color:#3b82f6; font-weight:700;">❓ Questions?</div>
+<!-- SLIDE 15 — CLOSE -->
+<section style="display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; height:100vh;">
+  <div style="font-size:2.5em; margin-bottom:0.3em;">🚀</div>
+  <h2 style="font-size:2em; margin-bottom:0.3em;">Let's Get to Work</h2>
+  <p style="color:#94a3b8; max-width:580px; line-height:1.6; font-size:0.88em;">
+    You are already ahead of the curve just by being here. Now let's make it count.
+  </p>
+  <br/>
+  <div style="display:flex; gap:24px; font-size:0.8em; color:#64748b; flex-wrap:wrap; justify-content:center;">
+    <div>Slack: <span style="color:#93c5fd;">#kubernetes-january-2026-cohort</span></div>
+    <div>Email: <span style="color:#93c5fd;">admin@emagegroup.net</span></div>
   </div>
+  <br/><br/>
+  <div style="font-size:1.4em; color:#3b82f6; font-weight:700;">Questions?</div>
 </section>
 
 </div>
 </div>
-
 <script src="https://cdn.jsdelivr.net/npm/reveal.js@4.6.1/dist/reveal.js"></script>
 <script>
   Reveal.initialize({
@@ -568,8 +436,7 @@
     center: false,
     width: 1200,
     height: 720,
-    margin: 0.04,
-    plugins: []
+    margin: 0.04
   });
 </script>
 </body>
