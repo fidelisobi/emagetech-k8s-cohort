@@ -1,0 +1,130 @@
+# ============================================================
+# QoS Class Comparison — Guaranteed, Burstable, BestEffort
+# ============================================================
+# Kubernetes assigns every pod a Quality of Service (QoS) class
+# based on the resource requests and limits set on its containers.
+# The QoS class determines eviction priority when a node is under
+# memory pressure:
+#
+#   BestEffort → evicted first  (no requests or limits set)
+#   Burstable  → evicted second (requests set but != limits, OR
+#                                only some containers have requests)
+#   Guaranteed → evicted last   (every container has requests AND
+#                                limits, and they are EQUAL)
+#
+# Rules (checked per-container, evaluated per-pod):
+#   Guaranteed: ALL containers must set cpu AND memory requests AND
+#               limits, AND requests must EQUAL limits.
+#   BestEffort: NO container sets any requests or limits at all.
+#   Burstable:  Anything else.
+#
+# Apply all three pods and compare with:
+#   kubectl get pod <name> -o jsonpath='{.status.qosClass}'
+# ============================================================
+
+# ============================================================
+# Pod 1: Guaranteed QoS
+# ============================================================
+# Every container sets cpu AND memory requests AND limits.
+# requests == limits for every resource on every container.
+# The scheduler guarantees this pod its full requested resources
+# at all times. It is the last to be evicted.
+# ============================================================
+apiVersion: v1
+kind: Pod
+metadata:
+  name: qos-guaranteed
+  namespace: default
+  labels:
+    app: qos-demo
+    qos-class: guaranteed
+    lab: "14-pod-lifecycle"
+  annotations:
+    description: "Guaranteed QoS — requests equal limits on all containers"
+spec:
+  containers:
+    - name: nginx
+      image: nginx:1.25
+      resources:
+        # requests == limits on both cpu AND memory → Guaranteed
+        requests:
+          cpu: "100m"      # Requesting 100 millicores
+          memory: "128Mi"  # Requesting 128 MiB
+        limits:
+          cpu: "100m"      # Limit equals request — this is the key to Guaranteed
+          memory: "128Mi"  # Limit equals request
+  restartPolicy: Always
+
+---
+# ============================================================
+# Pod 2: Burstable QoS
+# ============================================================
+# At least one container sets a request or limit, but the pod
+# does NOT satisfy the Guaranteed rule (either requests != limits
+# or not all resources are set on all containers).
+#
+# Common Burstable patterns:
+#   - requests set but limits are higher than requests
+#   - only cpu (not memory) requests set
+#   - only some containers in a multi-container pod have requests
+#
+# This pod sets requests LOWER than limits, meaning the container
+# can burst above its requested amount when spare capacity exists.
+# ============================================================
+apiVersion: v1
+kind: Pod
+metadata:
+  name: qos-burstable
+  namespace: default
+  labels:
+    app: qos-demo
+    qos-class: burstable
+    lab: "14-pod-lifecycle"
+  annotations:
+    description: "Burstable QoS — requests are lower than limits"
+spec:
+  containers:
+    - name: nginx
+      image: nginx:1.25
+      resources:
+        requests:
+          cpu: "50m"       # Guaranteed at least 50 millicores
+          memory: "64Mi"   # Guaranteed at least 64 MiB
+        limits:
+          cpu: "200m"      # Can burst up to 200 millicores when node has spare CPU
+          memory: "256Mi"  # Can burst up to 256 MiB — but risks OOMKill if node is tight
+  restartPolicy: Always
+
+---
+# ============================================================
+# Pod 3: BestEffort QoS
+# ============================================================
+# No container sets ANY requests or limits.
+# The pod uses whatever resources happen to be free on the node.
+# It is the FIRST to be evicted when the node is under pressure.
+#
+# BestEffort pods are appropriate for:
+#   - Batch jobs that can tolerate interruption
+#   - Low-priority background tasks
+#   - Development / debugging workloads
+#
+# They are NOT appropriate for any production workload.
+# ============================================================
+apiVersion: v1
+kind: Pod
+metadata:
+  name: qos-besteffort
+  namespace: default
+  labels:
+    app: qos-demo
+    qos-class: besteffort
+    lab: "14-pod-lifecycle"
+  annotations:
+    description: "BestEffort QoS — no resource requests or limits set"
+spec:
+  containers:
+    - name: nginx
+      image: nginx:1.25
+      # No resources block at all — this is what makes it BestEffort.
+      # The scheduler places this pod without reserving any capacity.
+  restartPolicy: Always

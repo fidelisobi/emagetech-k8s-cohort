@@ -1,0 +1,118 @@
+# ============================================================
+# Labels Exercise — Four pods for selector practice
+# ============================================================
+# These four pods are deliberately lightweight (pause container)
+# because the goal is to practice label selectors, NOT to run
+# real application workloads.
+#
+# The pause container is the same infrastructure container that
+# Kubernetes injects into every pod to hold the network namespace.
+# It does nothing, consumes almost no resources, and starts
+# instantly — perfect for label experiments.
+#
+# Apply all four pods at once:
+#   kubectl apply -f 01-labels-exercise.yaml
+#
+# After applying, practice the selector commands in the README.
+# ============================================================
+
+# --- Pod 1: frontend in production ---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-frontend-prod
+  namespace: default
+  labels:
+    # "app" is the most common label — identifies the logical application component
+    app: web-server
+    # "env" distinguishes production from non-production workloads
+    env: production
+    # "tier" describes where this component sits in a multi-tier architecture
+    tier: frontend
+    # A custom label for filtering all lab-13 resources together
+    lab: "13-api-objects"
+spec:
+  containers:
+    - name: pause
+      # registry.k8s.io/pause holds the network namespace open for the pod.
+      # It is the lightest possible container — essentially a no-op process.
+      image: registry.k8s.io/pause:3.9
+      resources:
+        requests:
+          cpu: "1m"      # 1 millicores — near zero
+          memory: "4Mi"
+        limits:
+          cpu: "10m"
+          memory: "8Mi"
+
+---
+# --- Pod 2: backend in production ---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-backend-prod
+  namespace: default
+  labels:
+    app: api-server        # Different app name from Pod 1 — different component
+    env: production        # Same env as Pod 1 — selector on env=production returns both
+    tier: backend          # Different tier — selector on tier=frontend returns only Pod 1
+    lab: "13-api-objects"
+spec:
+  containers:
+    - name: pause
+      image: registry.k8s.io/pause:3.9
+      resources:
+        requests:
+          cpu: "1m"
+          memory: "4Mi"
+        limits:
+          cpu: "10m"
+          memory: "8Mi"
+
+---
+# --- Pod 3: frontend in staging ---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-frontend-staging
+  namespace: default
+  labels:
+    app: web-server        # Same app as Pod 1 — selector on app=web-server returns both
+    env: staging           # Different env from Pod 1 — selector on env=production skips this
+    tier: frontend         # Same tier as Pod 1
+    lab: "13-api-objects"
+spec:
+  containers:
+    - name: pause
+      image: registry.k8s.io/pause:3.9
+      resources:
+        requests:
+          cpu: "1m"
+          memory: "4Mi"
+        limits:
+          cpu: "10m"
+          memory: "8Mi"
+
+---
+# --- Pod 4: cache in staging ---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-cache-staging
+  namespace: default
+  labels:
+    app: redis             # Unique app label — no other pod matches app=redis
+    env: staging           # Same env as Pod 3
+    tier: cache            # Unique tier — no other pod matches tier=cache
+    lab: "13-api-objects"
+spec:
+  containers:
+    - name: pause
+      image: registry.k8s.io/pause:3.9
+      resources:
+        requests:
+          cpu: "1m"
+          memory: "4Mi"
+        limits:
+          cpu: "10m"
+          memory: "8Mi"

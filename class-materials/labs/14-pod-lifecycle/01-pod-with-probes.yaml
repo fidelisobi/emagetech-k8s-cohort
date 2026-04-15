@@ -1,0 +1,124 @@
+# ============================================================
+# Pod with Liveness, Readiness, and Startup Probes
+# ============================================================
+# Kubernetes uses three types of probes to manage the lifecycle
+# of containers:
+#
+#   startupProbe  — runs FIRST; disables liveness and readiness
+#                   until it succeeds. Protects slow-starting apps.
+#
+#   readinessProbe — runs continuously; when it FAILS the pod is
+#                    removed from Service endpoints (stops getting
+#                    traffic). Does NOT restart the container.
+#
+#   livenessProbe  — runs continuously; when it FAILS the kubelet
+#                    restarts the container. Use for detecting
+#                    deadlocks or hung processes.
+#
+# This pod uses nginx as the application, which has a built-in
+# HTTP health endpoint at /. The probes all use httpGet.
+# ============================================================
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: probes-demo
+  namespace: default
+  labels:
+    app: probes-demo
+    lab: "14-pod-lifecycle"
+  annotations:
+    description: "Demonstrates startup, readiness, and liveness probes with resource limits"
+
+spec:
+  containers:
+    - name: nginx
+      image: nginx:1.25
+
+      ports:
+        - containerPort: 80
+          protocol: TCP
+
+      # --------------------------------------------------------
+      # Resource Requests and Limits
+      # --------------------------------------------------------
+      # requests — guaranteed resources; used by the scheduler to
+      #            find a node with enough free capacity
+      # limits   — hard ceiling; CPU is throttled, memory causes OOMKill
+      #
+      # When requests == limits the pod gets Guaranteed QoS class.
+      # When requests < limits the pod gets Burstable QoS class.
+      # --------------------------------------------------------
+      resources:
+        requests:
+          cpu: "50m"       # 50 millicores (0.05 of a CPU core)
+          memory: "64Mi"   # 64 mebibytes
+        limits:
+          cpu: "200m"      # Can burst to 200 millicores (0.2 CPU)
+          memory: "128Mi"  # Hard cap; exceeding this causes OOMKill
+
+      # --------------------------------------------------------
+      # Startup Probe
+      # --------------------------------------------------------
+      # The startup probe runs INSTEAD of liveness and readiness
+      # until it succeeds for the first time.
+      #
+      # Formula for max startup time:
+      #   failureThreshold * periodSeconds = maximum wait time
+      #   Here: 30 * 5s = 150 seconds maximum startup window
+      #
+      # Nginx starts in under 1 second so this will pass quickly.
+      # For a slow JVM app you might use 60 * 5 = 300 seconds.
+      # --------------------------------------------------------
+      startupProbe:
+        httpGet:
+          path: /           # URL path to request on the container
+          port: 80          # Port to connect to (matches containerPort)
+          # scheme defaults to HTTP; use HTTPS if TLS is enabled inside the container
+        initialDelaySeconds: 1   # Wait this many seconds after container start before the first check
+        periodSeconds: 5         # Run the probe every 5 seconds
+        failureThreshold: 30     # Allow up to 30 consecutive failures before declaring the startup failed
+        successThreshold: 1      # One success is enough to declare startup complete
+
+      # --------------------------------------------------------
+      # Readiness Probe
+      # --------------------------------------------------------
+      # Readiness controls traffic routing. A not-ready pod stays
+      # alive but is removed from Service Endpoints so it receives
+      # no new requests. Use this when the app is temporarily unable
+      # to serve (cache warm-up, config reload, etc.).
+      #
+      # A failed readiness probe does NOT restart the container.
+      # --------------------------------------------------------
+      readinessProbe:
+        httpGet:
+          path: /           # Same path as startup; could be a dedicated /ready endpoint
+          port: 80
+        initialDelaySeconds: 2   # Start checking 2s after the container starts
+        periodSeconds: 5         # Check every 5 seconds
+        failureThreshold: 3      # Remove from endpoints after 3 consecutive failures
+        successThreshold: 1      # Add back to endpoints after 1 success
+
+      # --------------------------------------------------------
+      # Liveness Probe
+      # --------------------------------------------------------
+      # Liveness detects a permanently broken container.
+      # When it fails enough times the kubelet KILLS and RESTARTS
+      # the container (respecting the pod's restartPolicy).
+      #
+      # Do NOT make liveness thresholds too aggressive — unnecessary
+      # restarts cause application downtime.
+      # --------------------------------------------------------
+      livenessProbe:
+        httpGet:
+          path: /           # The root URL returns 200 when nginx is healthy
+          port: 80
+        initialDelaySeconds: 5   # Give the container 5s to start before first liveness check
+        periodSeconds: 10        # Check every 10 seconds
+        failureThreshold: 3      # Restart container after 3 consecutive failures
+        successThreshold: 1      # Must succeed once to be considered live
+        # timeoutSeconds defaults to 1; increase it for slow health endpoints
+        timeoutSeconds: 2
+
+  # Always restart this container if it exits (appropriate for a long-running server)
+  restartPolicy: Always
