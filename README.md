@@ -259,16 +259,16 @@ Bullet points · Projects section
 GitHub profile] --> P
         P[Interview Prep
 career/interview-questions.md
-60+ questions with model answers
+Questions with model answers
 Technical + Behavioral] --> Q
         Q[Portfolio Polish
 career/portfolio-guide.md
 Pin repos · Write READMEs
 Practice the 3-min walkthrough] --> R
-        R[LinkedIn Optimization
-career/linkedin-guide.md
-Headline · About · Skills
-Recruiter-ready profile]
+        R[Offer & Negotiation Help
+career/job-search-strategy.md
+Counter-offer strategy
+Equity · Remote · Start date]
     end
 
     R --> S
