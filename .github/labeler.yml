@@ -1,0 +1,21 @@
+lab:
+  - class-materials/labs/**
+
+project:
+  - projects/**
+
+docs:
+  - "**/*.md"
+  - network-fundamentals/**
+  - git-fundamentals/**
+
+curriculum:
+  - class-materials/curriculum.md
+  - class-materials/slides/**
+
+prereqs:
+  - k8s-prereqs/**
+
+fix:
+  - changed-files:
+    - any-glob-to-any-file: "**"
