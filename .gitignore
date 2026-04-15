@@ -1,0 +1,77 @@
+# ─── Secrets & Credentials ────────────────────────────────────
+.env
+.env.*
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+kubeconfig
+kubeconfig.*
+*kubeconfig*
+.kube/
+secrets.yaml
+secrets.yml
+*-secret.yaml
+*-secret.yml
+
+# ─── Kubernetes generated files ───────────────────────────────
+*.kubeconfig
+helm-debug/
+.helm/
+
+# ─── Node.js ──────────────────────────────────────────────────
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm
+.pnpm-store/
+dist/
+build/
+
+# ─── Python ───────────────────────────────────────────────────
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+venv/
+.venv/
+env/
+*.egg-info/
+
+# ─── Docker ───────────────────────────────────────────────────
+.docker/
+
+# ─── Editors & OS ─────────────────────────────────────────────
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# ─── Logs & temp ──────────────────────────────────────────────
+*.log
+*.tmp
+*.temp
+/tmp/
+
+# ─── Terraform (if used) ──────────────────────────────────────
+.terraform/
+*.tfstate
+*.tfstate.backup
+*.tfvars
+
+# ─── CI artifacts ─────────────────────────────────────────────
+coverage/
+.nyc_output/
+junit.xml
+test-results/
