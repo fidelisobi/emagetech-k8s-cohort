@@ -1,0 +1,30 @@
+# =============================================================================
+# K8S CONCEPT: ConfigMap
+#
+# A ConfigMap stores non-sensitive configuration as key-value pairs.
+# The API Deployment mounts these values as environment variables (see
+# deployment-api.yaml).
+#
+# Rule of thumb:
+#   ConfigMap  → non-sensitive config (hostnames, ports, feature flags)
+#   Secret     → sensitive data (passwords, API keys, TLS certs)
+#
+# Key difference from baking config into the Docker image:
+# You can change a ConfigMap without rebuilding the image.
+# =============================================================================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "student-app.fullname" . }}-config
+  labels:
+    {{- include "student-app.labels" . | nindent 4 }}
+data:
+  # Application identity — displayed on the web UI
+  APP_NAME:    {{ .Values.api.config.appName    | quote }}
+  APP_VERSION: {{ .Values.api.config.appVersion | quote }}
+
+  # Database connection (non-sensitive parts only)
+  # The password lives in the Secret below.
+  DB_HOST: {{ include "student-app.postgresql.host" . | quote }}
+  DB_PORT: {{ .Values.api.config.dbPort | quote }}
+  DB_NAME: {{ .Values.api.config.dbName | quote }}

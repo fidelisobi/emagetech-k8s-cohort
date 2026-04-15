@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Student Demo App</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #f0f4f8;
+      color: #2d3748;
+      min-height: 100vh;
+      padding: 2rem;
+    }
+    header {
+      background: #2b6cb0;
+      color: white;
+      padding: 1.5rem 2rem;
+      border-radius: 8px;
+      margin-bottom: 2rem;
+    }
+    header h1 { font-size: 1.8rem; }
+    header p  { opacity: 0.85; margin-top: 0.25rem; font-size: 0.95rem; }
+
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+    @media (max-width: 720px) { .grid { grid-template-columns: 1fr; } }
+
+    .card {
+      background: white;
+      border-radius: 8px;
+      padding: 1.5rem;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+    }
+    .card h2 { font-size: 1.1rem; margin-bottom: 1rem; color: #2b6cb0; }
+
+    .info-row { display: flex; justify-content: space-between; padding: 0.4rem 0; border-bottom: 1px solid #e2e8f0; font-size: 0.9rem; }
+    .info-row:last-child { border-bottom: none; }
+    .label { color: #718096; }
+    .value { font-weight: 600; font-family: monospace; }
+
+    #status-badge {
+      display: inline-block;
+      padding: 0.2rem 0.6rem;
+      border-radius: 12px;
+      font-size: 0.8rem;
+      font-weight: 700;
+    }
+    .ok   { background: #c6f6d5; color: #276749; }
+    .fail { background: #fed7d7; color: #9b2335; }
+    .wait { background: #fefcbf; color: #7b6616; }
+
+    form { display: flex; flex-direction: column; gap: 0.75rem; }
+    input, button {
+      padding: 0.6rem 0.9rem;
+      border-radius: 6px;
+      font-size: 0.95rem;
+    }
+    input  { border: 1px solid #cbd5e0; outline: none; }
+    input:focus { border-color: #2b6cb0; }
+    button {
+      background: #2b6cb0;
+      color: white;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    button:hover   { background: #2c5282; }
+    button:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    #items-list { list-style: none; }
+    #items-list li {
+      padding: 0.5rem 0.75rem;
+      border-bottom: 1px solid #e2e8f0;
+      font-size: 0.9rem;
+      display: flex;
+      justify-content: space-between;
+    }
+    #items-list li:last-child { border-bottom: none; }
+    .item-id { color: #a0aec0; font-size: 0.8rem; }
+
+    pre {
+      background: #1a202c;
+      color: #68d391;
+      padding: 1rem;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      overflow: auto;
+      max-height: 200px;
+    }
+
+    .span-2 { grid-column: 1 / -1; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Kubernetes Student Demo App</h1>
+  <p>A simple multi-tier app for exploring K8s concepts</p>
+</header>
+
+<div class="grid">
+
+  <!-- ------------------------------------------------------------------ -->
+  <!-- Pod Info card — demonstrates the Downward API                       -->
+  <!-- ------------------------------------------------------------------ -->
+  <div class="card">
+    <h2>Pod Info (Downward API)</h2>
+    <p style="font-size:0.8rem;color:#718096;margin-bottom:0.75rem">
+      Refresh the page to see the pod name change as requests are
+      load-balanced across replicas.
+    </p>
+    <div id="pod-info">
+      <div class="info-row"><span class="label">Status</span>
+        <span id="status-badge" class="wait">loading…</span></div>
+      <div class="info-row"><span class="label">App</span>        <span class="value" id="app-name">—</span></div>
+      <div class="info-row"><span class="label">Version</span>    <span class="value" id="app-version">—</span></div>
+      <div class="info-row"><span class="label">Pod Name</span>   <span class="value" id="pod-name">—</span></div>
+      <div class="info-row"><span class="label">Namespace</span>  <span class="value" id="pod-ns">—</span></div>
+      <div class="info-row"><span class="label">Node</span>       <span class="value" id="node-name">—</span></div>
+    </div>
+  </div>
+
+  <!-- ------------------------------------------------------------------ -->
+  <!-- Add item form                                                        -->
+  <!-- ------------------------------------------------------------------ -->
+  <div class="card">
+    <h2>Create Item</h2>
+    <form id="create-form">
+      <input id="item-name"  type="text" placeholder="Item name (required)" required />
+      <input id="item-value" type="text" placeholder="Item value (optional)" />
+      <button type="submit" id="submit-btn">Add Item</button>
+    </form>
+    <p id="form-msg" style="margin-top:0.75rem;font-size:0.85rem;"></p>
+  </div>
+
+  <!-- ------------------------------------------------------------------ -->
+  <!-- Items list — spans full width                                        -->
+  <!-- ------------------------------------------------------------------ -->
+  <div class="card span-2">
+    <h2>Items from Database</h2>
+    <p style="font-size:0.8rem;color:#718096;margin-bottom:0.75rem">
+      Served by pod: <strong id="served-by">—</strong>
+    </p>
+    <ul id="items-list"><li>Loading…</li></ul>
+  </div>
+
+  <!-- ------------------------------------------------------------------ -->
+  <!-- Raw API response — handy for debugging                              -->
+  <!-- ------------------------------------------------------------------ -->
+  <div class="card span-2">
+    <h2>Last Raw API Response</h2>
+    <pre id="raw-json">—</pre>
+  </div>
+
+</div><!-- /grid -->
+
+<script>
+  // -------------------------------------------------------------------
+  // Nginx proxies /api/* to the API service (see nginx.conf).
+  // The frontend never talks directly to the API pod IP.
+  // -------------------------------------------------------------------
+
+  async function fetchAppInfo() {
+    const badge = document.getElementById('status-badge');
+    try {
+      const res = await fetch('/pod-info');
+      const data = await res.json();
+      badge.textContent = 'OK';
+      badge.className = 'ok';
+      document.getElementById('app-name').textContent    = data.app      || '—';
+      document.getElementById('app-version').textContent = data.version  || '—';
+      document.getElementById('pod-name').textContent    = data.pod_name || '—';
+      document.getElementById('pod-ns').textContent      = data.pod_namespace || '—';
+      document.getElementById('node-name').textContent   = data.node_name    || '—';
+    } catch (err) {
+      badge.textContent = 'ERROR';
+      badge.className = 'fail';
+    }
+  }
+
+  async function fetchItems() {
+    const list = document.getElementById('items-list');
+    const raw  = document.getElementById('raw-json');
+    try {
+      const res  = await fetch('/api/items');
+      const data = await res.json();
+      raw.textContent = JSON.stringify(data, null, 2);
+      document.getElementById('served-by').textContent = data.served_by || '—';
+      if (data.items && data.items.length > 0) {
+        list.innerHTML = data.items.map(item =>
+          `<li>
+             <span><strong>${escapeHtml(item.name)}</strong> — ${escapeHtml(item.value || '')}</span>
+             <span class="item-id">#${item.id} &nbsp; ${item.created}</span>
+           </li>`
+        ).join('');
+      } else {
+        list.innerHTML = '<li>No items yet — create one above!</li>';
+      }
+    } catch (err) {
+      list.innerHTML = `<li>Error loading items: ${err.message}</li>`;
+      raw.textContent = err.toString();
+    }
+  }
+
+  document.getElementById('create-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('submit-btn');
+    const msg = document.getElementById('form-msg');
+    btn.disabled = true;
+    msg.textContent = '';
+    const body = {
+      name:  document.getElementById('item-name').value.trim(),
+      value: document.getElementById('item-value').value.trim(),
+    };
+    try {
+      const res  = await fetch('/api/items', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        msg.style.color = 'green';
+        msg.textContent = `Created item #${data.id}`;
+        document.getElementById('item-name').value  = '';
+        document.getElementById('item-value').value = '';
+        fetchItems(); // refresh the list
+      } else {
+        msg.style.color = 'red';
+        msg.textContent = data.error || 'Unknown error';
+      }
+    } catch (err) {
+      msg.style.color = 'red';
+      msg.textContent = err.message;
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  function escapeHtml(str) {
+    return String(str)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  // Initial load
+  fetchAppInfo();
+  fetchItems();
+</script>
+</body>
+</html>

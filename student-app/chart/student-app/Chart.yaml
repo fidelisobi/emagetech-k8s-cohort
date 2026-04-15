@@ -1,0 +1,22 @@
+apiVersion: v2
+name: student-app
+description: |
+  Multi-tier demo application used in the Kubernetes training course.
+  Demonstrates: Deployments, Services, ConfigMaps, Secrets, probes,
+  Downward API, HPA, ServiceMonitor, and PostgreSQL via a sub-chart.
+
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+
+# K8S CONCEPT: Helm dependencies (sub-charts)
+# Bitnami's PostgreSQL chart is pulled in as a dependency.
+# Run "helm dependency update" before "helm install" to fetch it.
+dependencies:
+  - name: postgresql
+    version: "15.5.20"
+    repository: "https://charts.bitnami.com/bitnami"
+    # The alias lets us reference postgresql config under values.postgresql.*
+    alias: postgresql
+    # Students can disable the bundled DB and point to an external one
+    condition: postgresql.enabled

@@ -1,0 +1,36 @@
+# =============================================================================
+# K8S CONCEPT: Service (ClusterIP)
+#
+# A Service gives a stable virtual IP and DNS name to a set of pods.
+# Without a Service, you would need to track pod IPs directly — which change
+# every time a pod is restarted or rescheduled.
+#
+# ClusterIP:    reachable only inside the cluster (frontend -> API)
+# NodePort:     reachable on every node's IP at a high port
+# LoadBalancer: provisions a cloud load balancer (GCP Network LB, AWS ALB)
+# ExternalName: maps to a DNS name (useful for external databases)
+#
+# The selector below finds pods by label.  Traffic is load-balanced across
+# all matching pods.  THIS is why changing the pod name does not break routing.
+# =============================================================================
+apiVersion: v1
+kind: Service
+metadata:
+  # This name MUST match the "student-app-api" hostname in nginx.conf
+  name: {{ include "student-app.fullname" . }}-api
+  labels:
+    {{- include "student-app.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.api.service.type }}
+
+  # K8S CONCEPT: Service selector
+  # The Service forwards traffic to pods whose labels match this selector.
+  # The selector must match spec.template.metadata.labels in the Deployment.
+  selector:
+    {{- include "student-app.api.selectorLabels" . | nindent 4 }}
+
+  ports:
+    - name: http
+      protocol: TCP
+      port: {{ .Values.api.service.port }}           # port the Service listens on
+      targetPort: {{ .Values.api.service.targetPort }} # port on the container

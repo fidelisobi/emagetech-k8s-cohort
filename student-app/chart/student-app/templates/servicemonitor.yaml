@@ -1,0 +1,46 @@
+# =============================================================================
+# K8S CONCEPT: ServiceMonitor (Prometheus Operator CRD)
+#
+# A ServiceMonitor is a Custom Resource defined by the Prometheus Operator.
+# It tells Prometheus which Services to scrape and how.
+#
+# Without the Prometheus Operator you would configure scrape jobs in
+# prometheus.yml by hand.  The Operator turns scrape config into a K8s-native
+# declarative resource.
+#
+# Flow:
+#   ServiceMonitor (CR)
+#       -> Prometheus Operator watches it
+#       -> Updates Prometheus config
+#       -> Prometheus scrapes /metrics on API pods
+#       -> Grafana dashboards show the data
+#
+# Prerequisites:
+#   helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+#   helm install kube-prometheus-stack prometheus-community/kube-prometheus-stack
+# =============================================================================
+{{- if .Values.serviceMonitor.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ include "student-app.fullname" . }}-api
+  labels:
+    {{- include "student-app.labels" . | nindent 4 }}
+    # K8S CONCEPT: Label selector for Prometheus
+    # The Prometheus CR has a serviceMonitorSelector that picks up monitors
+    # with matching labels.  Add labels here to match your Prometheus install.
+    {{- with .Values.serviceMonitor.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  # Which Services to scrape (matched by label)
+  selector:
+    matchLabels:
+      {{- include "student-app.api.selectorLabels" . | nindent 6 }}
+
+  endpoints:
+    - port: http           # must match the port name in service-api.yaml
+      path: /metrics
+      interval: {{ .Values.serviceMonitor.interval }}
+      scrapeTimeout: {{ .Values.serviceMonitor.scrapeTimeout }}
+{{- end }}
