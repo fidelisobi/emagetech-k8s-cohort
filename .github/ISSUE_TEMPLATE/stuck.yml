@@ -1,0 +1,58 @@
+name: 🙋 I'm Stuck
+description: I've tried to figure it out but I'm stuck on a lab or project
+labels: ["help wanted", "student"]
+body:
+  - type: dropdown
+    id: section
+    attributes:
+      label: Which lab or project?
+      options:
+        - Lab 11 — Architecture
+        - Lab 12 — kubectl
+        - Lab 13 — API Objects
+        - Lab 14 — Pod Lifecycle
+        - Lab 15 — ConfigMaps/Secrets
+        - Lab 16 — Pod Controllers
+        - Lab 17 — Network Policies
+        - Lab 18 — Gateway API
+        - Lab 19 — Platform Add-ons
+        - Lab 20 — Storage
+        - Lab 21 — RBAC
+        - Lab 22 — Troubleshooting
+        - Lab 23 — Scaling
+        - Lab 24 — Helm
+        - Lab 25 — Observability
+        - Lab 26 — ArgoCD
+        - Lab 27 — Istio
+        - Lab 28 — Kyverno
+        - Lab 29 — CI/CD
+        - Lab 30 — Day 2 Ops
+        - Project 1–4
+        - Project 5–10
+        - Project 11–15
+        - network-fundamentals
+        - git-fundamentals
+    validations:
+      required: true
+  - type: textarea
+    id: tried
+    attributes:
+      label: What have you already tried?
+      description: Show us what you ran and what happened
+      placeholder: |
+        Command I ran:
+        ```
+        kubectl apply -f deployment.yaml
+        ```
+        Error I got:
+        ```
+        Error from server: ...
+        ```
+    validations:
+      required: true
+  - type: textarea
+    id: question
+    attributes:
+      label: Specific question
+    validations:
+      required: true
