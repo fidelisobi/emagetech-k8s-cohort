@@ -1,0 +1,242 @@
+# ============================================================
+# Lab 25 — Observability: Loki Log Generator
+# ============================================================
+# This manifest deploys a pod that continuously emits structured
+# JSON logs at different severity levels (info, warn, error).
+#
+# Why structured (JSON) logs?
+#   Loki can parse JSON log lines and extract fields as labels,
+#   enabling powerful LogQL queries like:
+#     {app="log-generator"} | json | level="error"
+#   Without JSON, you can only filter by raw string matching.
+#
+# What this pod does:
+#   Every second it logs one of four message types at random:
+#     - INFO:  normal request log with method, path, status, latency
+#     - WARN:  slow request (latency > 500ms)
+#     - ERROR: 5xx response with error message
+#     - DEBUG: internal state dump
+#
+# Apply:
+#   kubectl apply -f 03-loki-test.yaml
+#
+# Verify logs are being emitted:
+#   kubectl logs -f log-generator -n observability-lab
+#
+# Then query in Grafana → Explore → Loki data source:
+#   All logs:           {namespace="observability-lab", app="log-generator"}
+#   Only errors:        {namespace="observability-lab"} | json | level="error"
+#   Count errors/min:   sum(rate({namespace="observability-lab"} | json | level="error" [1m]))
+#   Slow requests only: {app="log-generator"} | json | latency_ms > 500
+#   By request ID:      {app="log-generator"} | json | request_id="req-1234"
+# ============================================================
+apiVersion: v1
+kind: Pod
+metadata:
+  name: log-generator
+  namespace: observability-lab
+  labels:
+    app: log-generator
+    # Adding a "component" label makes it easier to filter in LogQL:
+    #   {app="log-generator", component="api-simulator"}
+    component: api-simulator
+spec:
+  # restartPolicy: Always means the pod restarts if the container exits.
+  # Since this is a log generator that loops forever, it should not exit,
+  # but Always is the safe default for long-running pods.
+  restartPolicy: Always
+
+  containers:
+    - name: log-generator
+      # busybox provides the /bin/sh shell needed to run the log loop.
+      # It is tiny (1–2 MB) and widely available.
+      image: busybox:1.36
+      command:
+        - /bin/sh
+        - -c
+        - |
+          # -------------------------------------------------------
+          # Structured JSON log generator
+          # Emits one log line per second indefinitely.
+          # Each line is a valid JSON object with consistent fields
+          # so Loki's JSON parser can extract them as labels.
+          # -------------------------------------------------------
+
+          # Counter for incrementing request IDs
+          counter=0
+
+          while true; do
+            counter=$((counter + 1))
+
+            # Timestamp in ISO-8601 format (Loki also auto-captures ingest time)
+            ts=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+            # Pick a random HTTP method
+            method_n=$((RANDOM % 4))
+            case $method_n in
+              0) method="GET"    ;;
+              1) method="POST"   ;;
+              2) method="PUT"    ;;
+              3) method="DELETE" ;;
+            esac
+
+            # Pick a random endpoint path
+            path_n=$((RANDOM % 5))
+            case $path_n in
+              0) path="/api/users"     ;;
+              1) path="/api/orders"    ;;
+              2) path="/api/products"  ;;
+              3) path="/health"        ;;
+              4) path="/api/payments"  ;;
+            esac
+
+            # Pick a random latency between 10ms and 600ms
+            latency=$((RANDOM % 590 + 10))
+
+            # Decide log level based on weighted probability:
+            #   ~70% info, ~15% warn (latency > 300ms), ~10% error, ~5% debug
+            level_n=$((RANDOM % 20))
+            if [ "$level_n" -lt 14 ]; then
+              # INFO: normal successful request
+              level="info"
+              status=200
+              msg="request completed"
+            elif [ "$level_n" -lt 17 ]; then
+              # WARN: slow request (latency threshold exceeded)
+              level="warn"
+              status=200
+              latency=$((RANDOM % 500 + 500))  # force latency to 500-1000ms for warn
+              msg="slow request detected"
+            elif [ "$level_n" -lt 19 ]; then
+              # ERROR: server error with error details
+              level="error"
+              status=$((RANDOM % 3 + 1))
+              case $status in
+                1) status=500 ; msg="internal server error" ;;
+                2) status=502 ; msg="bad gateway upstream timeout" ;;
+                3) status=503 ; msg="service unavailable" ;;
+              esac
+            else
+              # DEBUG: internal state
+              level="debug"
+              status=0
+              msg="cache eviction triggered"
+            fi
+
+            # Build the JSON log line.
+            # Every field on the line is queryable via Loki's JSON parser.
+            printf '{"timestamp":"%s","level":"%s","message":"%s","request_id":"req-%05d","method":"%s","path":"%s","status_code":%d,"latency_ms":%d,"service":"student-app","version":"1.0.0"}\n' \
+              "$ts" \
+              "$level" \
+              "$msg" \
+              "$counter" \
+              "$method" \
+              "$path" \
+              "$status" \
+              "$latency"
+
+            # Sleep 1 second between log lines.
+            # Reduce to 0.5 to generate more volume for testing.
+            sleep 1
+          done
+      resources:
+        requests:
+          cpu: 10m        # very lightweight — just a shell loop
+          memory: 16Mi
+        limits:
+          cpu: 50m
+          memory: 32Mi
+
+---
+# ============================================================
+# Bonus: High-Volume Error Burst Generator
+# ============================================================
+# This second pod generates a concentrated burst of ERROR logs.
+# Use it to trigger the PrometheusRule alert from 02-prometheusrule.yaml
+# and to practice filtering noisy log streams in LogQL.
+#
+# Deploy it:
+#   kubectl apply -f 03-loki-test.yaml
+#   # Both pods apply; the burst generator will emit ~10 errors/sec
+#
+# Then in Grafana:
+#   {app="error-burst"} | json | level="error"
+#   rate({app="error-burst"} | json | level="error" [1m])
+# ============================================================
+apiVersion: v1
+kind: Pod
+metadata:
+  name: error-burst-generator
+  namespace: observability-lab
+  labels:
+    app: error-burst
+    component: error-simulator
+spec:
+  restartPolicy: Always
+  containers:
+    - name: error-burst
+      image: busybox:1.36
+      command:
+        - /bin/sh
+        - -c
+        - |
+          # -------------------------------------------------------
+          # Alternates between a "healthy" phase (30s, ~1 error/5s)
+          # and a "degraded" phase (60s, ~5 errors/s) so you can
+          # watch the alert in Prometheus transition through
+          # INACTIVE → PENDING → FIRING → RESOLVED
+          # -------------------------------------------------------
+          seq=0
+          phase="healthy"
+          phase_start=$(date +%s)
+
+          while true; do
+            seq=$((seq + 1))
+            now=$(date +%s)
+            ts=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+            # Switch phases every 90 seconds
+            elapsed=$((now - phase_start))
+            if [ "$elapsed" -ge 90 ]; then
+              if [ "$phase" = "healthy" ]; then
+                phase="degraded"
+              else
+                phase="healthy"
+              fi
+              phase_start=$now
+              # Emit a phase-change event log
+              printf '{"timestamp":"%s","level":"warn","message":"phase change","phase":"%s","service":"error-burst","seq":%d}\n' \
+                "$ts" "$phase" "$seq"
+            fi
+
+            # In degraded phase: emit errors at high rate
+            if [ "$phase" = "degraded" ]; then
+              error_n=$((RANDOM % 3))
+              case $error_n in
+                0) code=500 ; msg="database connection pool exhausted" ;;
+                1) code=503 ; msg="downstream dependency unavailable" ;;
+                2) code=502 ; msg="upstream read timeout after 30s" ;;
+              esac
+              printf '{"timestamp":"%s","level":"error","message":"%s","status_code":%d,"service":"error-burst","phase":"degraded","seq":%d}\n' \
+                "$ts" "$msg" "$code" "$seq"
+              sleep 0.2    # 5 errors per second in degraded phase
+            else
+              # Healthy phase: mostly info, occasional error
+              r=$((RANDOM % 5))
+              if [ "$r" -eq 0 ]; then
+                printf '{"timestamp":"%s","level":"error","message":"occasional transient error","status_code":500,"service":"error-burst","phase":"healthy","seq":%d}\n' \
+                  "$ts" "$seq"
+              else
+                printf '{"timestamp":"%s","level":"info","message":"request ok","status_code":200,"service":"error-burst","phase":"healthy","seq":%d}\n' \
+                  "$ts" "$seq"
+              fi
+              sleep 1
+            fi
+          done
+      resources:
+        requests:
+          cpu: 10m
+          memory: 16Mi
+        limits:
+          cpu: 50m
+          memory: 32Mi

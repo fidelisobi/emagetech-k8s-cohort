@@ -1,0 +1,150 @@
+# ============================================================
+# Lab 26 — ArgoCD GitOps: Application (Helm source)
+# ============================================================
+# ArgoCD can deploy Helm charts directly without needing a
+# separate CI/CD step to run "helm install". ArgoCD:
+#   1. Clones the Helm chart (from a Git repo or Helm repo)
+#   2. Runs "helm template" to render the manifests
+#   3. Applies the rendered manifests to the cluster
+#   4. Tracks drift against the rendered output
+#
+# Key difference from plain `helm install`:
+#   - ArgoCD stores the RENDERED manifests (not the Helm release secret)
+#   - Drift detection compares against the rendered YAML, not Helm state
+#   - You cannot use `helm rollback` — rollback is done via Git (change targetRevision)
+#
+# This Application deploys nginx from the Bitnami Helm chart repository
+# with custom values overriding the defaults.
+#
+# Prerequisites:
+#   ArgoCD must be installed in the "argocd" namespace.
+#
+# Apply:
+#   kubectl apply -f 02-application-helm.yaml
+#
+# After syncing, verify:
+#   kubectl get all -n nginx-helm
+#   argocd app get nginx-helm --show-managed-fields
+# ============================================================
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: nginx-helm
+  namespace: argocd
+  labels:
+    lab: "26"
+    type: helm
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+
+  # -------------------------------------------------------
+  # source: Helm repository source.
+  # Instead of a Git repoURL, we point directly at a Helm chart registry.
+  # ArgoCD supports both HTTP Helm repos and OCI chart registries.
+  # -------------------------------------------------------
+  source:
+    # repoURL: the Helm chart repository URL.
+    # For OCI registries use: oci://registry-1.docker.io/bitnamicharts
+    repoURL: https://charts.bitnami.com/bitnami
+
+    # chart: the chart name within the repository.
+    # Only valid when using a Helm repo source (not Git).
+    chart: nginx
+
+    # targetRevision: chart version to deploy.
+    # Pin to an exact version for reproducibility.
+    # Check available versions: helm search repo bitnami/nginx --versions
+    targetRevision: "18.3.5"
+
+    # helm: chart-specific configuration
+    helm:
+      # releaseName: the Helm release name ArgoCD uses internally.
+      # Defaults to the Application name if not set.
+      # This controls the "app.kubernetes.io/instance" label applied to resources.
+      releaseName: nginx-helm
+
+      # values: inline values override — same as a values.yaml file.
+      # These override the chart's defaults exactly like -f values.yaml would.
+      # Keep this minimal; for complex configs commit a values file to Git instead.
+      values: |
+        # Number of nginx replicas to run
+        replicaCount: 2
+
+        # Use ClusterIP to avoid creating a GCP Load Balancer (which costs money in lab)
+        service:
+          type: ClusterIP
+          port: 80
+
+        # Set resource requests/limits for the lab environment
+        resources:
+          requests:
+            cpu: 50m
+            memory: 64Mi
+          limits:
+            cpu: 200m
+            memory: 128Mi
+
+        # Add custom labels to all pods managed by this chart
+        podLabels:
+          lab: "26-argocd"
+          managed-by: argocd
+
+        # Disable autoscaling (HPA) — not needed in the lab
+        autoscaling:
+          enabled: false
+
+        # serverBlock: custom nginx.conf content
+        # Demonstrates that complex config can be managed entirely via GitOps
+        serverBlock: |-
+          server {
+            listen 0.0.0.0:8080;
+            location / {
+              return 200 'Hello from ArgoCD-managed nginx!\n';
+              add_header Content-Type text/plain;
+            }
+            location /health {
+              return 200 'ok\n';
+              add_header Content-Type text/plain;
+            }
+          }
+
+        # containerPorts: match the serverBlock port
+        containerPorts:
+          http: 8080
+
+      # parameters: override individual Helm values using name=value syntax.
+      # These are applied AFTER the values block above (higher precedence).
+      # Equivalent to: helm install ... --set key=value
+      # Use sparingly — prefer the values block for readability.
+      parameters:
+        - name: replicaCount
+          value: "2"   # must be a string even for numeric values
+
+  # -------------------------------------------------------
+  # destination: deploy into a dedicated namespace
+  # -------------------------------------------------------
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: nginx-helm
+
+  # -------------------------------------------------------
+  # syncPolicy: manual sync for Helm apps in the lab.
+  # This lets you practice triggering syncs from the UI.
+  # -------------------------------------------------------
+  syncPolicy:
+    # No automated sync — you will trigger manually from the UI or CLI.
+    # To enable auto-sync later:
+    #   argocd app set nginx-helm --sync-policy automated
+    syncOptions:
+      - CreateNamespace=true
+      # ApplyOutOfSyncOnly=true: only apply resources that are out of sync.
+      # Speeds up syncs when only a few resources have changed.
+      - ApplyOutOfSyncOnly=true
+    retry:
+      limit: 3
+      backoff:
+        duration: 10s
+        factor: 2
+        maxDuration: 2m

@@ -1,0 +1,218 @@
+# ============================================================
+# Lab 25 — Observability: PrometheusRule
+# ============================================================
+# A PrometheusRule is a Prometheus Operator custom resource that
+# defines alerting rules and recording rules in PromQL.
+#
+# Alerting rules:  evaluate a PromQL expression on every evaluation
+#                  interval; when the condition is true, an alert
+#                  fires and is sent to Alertmanager.
+#
+# Recording rules: pre-compute expensive PromQL expressions and store
+#                  the result as a new metric. Speeds up dashboards.
+#
+# Alert lifecycle:
+#   INACTIVE → PENDING → FIRING
+#     - INACTIVE:  expression is false; no alert
+#     - PENDING:   expression has been true for less than "for" duration
+#     - FIRING:    expression has been true for >= "for" duration;
+#                  Alertmanager receives and routes the alert
+#
+# Prerequisites:
+#   kube-prometheus-stack installed in the "monitoring" namespace.
+#   student-app deployed and ServiceMonitor applied (01-servicemonitor.yaml).
+#
+# Apply:
+#   kubectl apply -f 02-prometheusrule.yaml
+#
+# Verify rule is loaded:
+#   kubectl port-forward svc/prometheus-monitoring-kube-prometheus -n monitoring 9090:9090
+#   Open: http://localhost:9090/rules
+#   Look for: student-app.rules group
+#
+# Trigger the error-rate alert manually:
+#   kubectl scale deployment student-app -n observability-lab --replicas=0
+#   Wait 2–3 minutes, then check: http://localhost:9090/alerts
+# ============================================================
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: student-app-rules
+  namespace: observability-lab
+  labels:
+    # CRITICAL: must match the Prometheus Operator's ruleSelector.
+    # For kube-prometheus-stack the default label is:
+    #   release: prometheus-monitoring
+    # Verify: kubectl get prometheus -n monitoring -o yaml | grep ruleSelector
+    release: prometheus-monitoring
+    # app label is a convention — not required for discovery
+    app: student-app
+spec:
+  groups:
+    # -------------------------------------------------------
+    # Group 1: Alerting rules for the student-app
+    # Evaluation interval for this group is inherited from
+    # the Prometheus global evaluation_interval (default 1m).
+    # You can override per-group with: interval: 30s
+    # -------------------------------------------------------
+    - name: student-app.rules
+      interval: 30s   # evaluate these rules every 30 seconds for faster lab feedback
+      rules:
+
+        # -------------------------------------------------------
+        # Alert 1: High HTTP Error Rate
+        #
+        # Fires when more than 5% of HTTP responses in the last
+        # 5-minute window are 5xx errors.
+        #
+        # PromQL breakdown:
+        #   rate(http_requests_total{status=~"5.."}[5m])
+        #     → per-second rate of 5xx requests over 5m window
+        #   rate(http_requests_total[5m])
+        #     → per-second rate of ALL requests over 5m window
+        #   (5xx rate / total rate) * 100 > 5
+        #     → fires when error percentage exceeds 5%
+        #
+        # NOTE: This assumes your app exposes a metric called
+        # http_requests_total with a "status" label containing the
+        # HTTP status code (e.g., "200", "404", "500").
+        # Adjust the metric name to match your app's actual metrics.
+        # -------------------------------------------------------
+        - alert: HighHTTPErrorRate
+          expr: |
+            (
+              rate(http_requests_total{
+                namespace="observability-lab",
+                status=~"5.."
+              }[5m])
+              /
+              rate(http_requests_total{
+                namespace="observability-lab"
+              }[5m])
+            ) * 100 > 5
+          # for: the condition must be true for this long before the alert
+          # transitions from PENDING to FIRING. Prevents noisy alerts on
+          # brief transient spikes.
+          for: 2m
+          labels:
+            # Labels on the alert are used by Alertmanager to route and
+            # group alerts. "severity: critical" could route to PagerDuty,
+            # while "severity: warning" routes to Slack.
+            severity: critical
+            team: platform
+          annotations:
+            # summary: short one-line description used in notification subject lines
+            summary: "High HTTP error rate on student-app"
+            # description: detailed message with dynamic values from the alert
+            # {{ $value }} inserts the actual computed metric value
+            # {{ $labels.namespace }} inserts the label from the firing series
+            description: >-
+              student-app in namespace {{ $labels.namespace }} has an HTTP 5xx
+              error rate of {{ printf "%.2f" $value }}% over the last 5 minutes.
+              Check application logs and recent deployments.
+            # runbook_url: link to the runbook for this alert (best practice)
+            runbook_url: "https://github.com/your-org/runbooks/blob/main/student-app-high-error-rate.md"
+
+        # -------------------------------------------------------
+        # Alert 2: High P99 Latency
+        #
+        # Fires when the 99th percentile response time exceeds 1 second.
+        #
+        # PromQL breakdown:
+        #   histogram_quantile(0.99, ...)
+        #     → computes the 99th percentile from a histogram metric
+        #   rate(http_request_duration_seconds_bucket[5m])
+        #     → per-second rate of observations per bucket over 5m
+        #
+        # This requires your app to expose a histogram metric named
+        # http_request_duration_seconds with _bucket, _count, _sum suffixes.
+        # Standard Go/Python Prometheus client libraries emit this automatically.
+        #
+        # The "by (handler)" clause means the alert fires separately for each
+        # HTTP handler (endpoint path) that exceeds the threshold — so you can
+        # pinpoint which endpoint is slow.
+        # -------------------------------------------------------
+        - alert: HighP99Latency
+          expr: |
+            histogram_quantile(
+              0.99,
+              sum(
+                rate(http_request_duration_seconds_bucket{
+                  namespace="observability-lab"
+                }[5m])
+              ) by (handler, le)
+            ) > 1
+          for: 5m
+          labels:
+            severity: warning
+            team: platform
+          annotations:
+            summary: "High P99 latency on student-app"
+            description: >-
+              student-app handler {{ $labels.handler }} has P99 latency of
+              {{ printf "%.3f" $value }}s (threshold: 1s) over the last 5 minutes.
+              Investigate slow queries or resource saturation.
+            runbook_url: "https://github.com/your-org/runbooks/blob/main/student-app-high-latency.md"
+
+        # -------------------------------------------------------
+        # Alert 3: App Has No Running Pods (Dead Service)
+        #
+        # Fires when zero pods are running for the student-app.
+        # This acts as a catch-all availability alert.
+        #
+        # kube_deployment_status_replicas_available is emitted by
+        # kube-state-metrics (part of kube-prometheus-stack).
+        # -------------------------------------------------------
+        - alert: StudentAppDown
+          expr: |
+            kube_deployment_status_replicas_available{
+              namespace="observability-lab",
+              deployment="student-app"
+            } == 0
+          for: 1m
+          labels:
+            severity: critical
+            team: platform
+          annotations:
+            summary: "student-app has zero available replicas"
+            description: >-
+              Deployment student-app in namespace {{ $labels.namespace }}
+              has 0 available replicas. The service is completely down.
+
+    # -------------------------------------------------------
+    # Group 2: Recording rules
+    # Recording rules pre-compute expensive expressions and store
+    # them as new time series. This dramatically speeds up dashboards
+    # that need to query the same expression repeatedly.
+    #
+    # Naming convention for recording rules:
+    #   level:metric:operations
+    #   e.g., job:http_requests_total:rate5m
+    # -------------------------------------------------------
+    - name: student-app.recording-rules
+      interval: 1m
+      rules:
+
+        # Pre-compute the 5-minute request rate per job.
+        # Dashboards can query this as:
+        #   job:http_requests_total:rate5m{namespace="observability-lab"}
+        # instead of re-computing rate() on every dashboard refresh.
+        - record: job:http_requests_total:rate5m
+          expr: |
+            sum(
+              rate(http_requests_total{namespace="observability-lab"}[5m])
+            ) by (job, namespace)
+
+        # Pre-compute the error ratio so it's fast to query in dashboards.
+        - record: job:http_error_ratio:rate5m
+          expr: |
+            sum(
+              rate(http_requests_total{
+                namespace="observability-lab",
+                status=~"5.."
+              }[5m])
+            ) by (job, namespace)
+            /
+            sum(
+              rate(http_requests_total{namespace="observability-lab"}[5m])
+            ) by (job, namespace)

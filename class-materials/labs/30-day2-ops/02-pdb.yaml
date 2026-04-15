@@ -1,0 +1,189 @@
+# ============================================================
+# Lab 30 — Day 2 Operations: PodDisruptionBudget
+# ============================================================
+# A PodDisruptionBudget (PDB) protects a workload from having
+# too many pods disrupted simultaneously during VOLUNTARY disruptions.
+#
+# Voluntary disruptions include:
+#   - Node drain (for upgrades, maintenance, or scale-down)
+#   - Rolling update (Deployment rollout)
+#   - kubectl delete pod (explicit deletion)
+#   - Cluster autoscaler removing an underutilized node
+#
+# Involuntary disruptions (hardware failure, OOM kill) are NOT
+# controlled by PDBs — they can still cause pod loss at any time.
+# PDBs only gate the voluntary disruption path.
+#
+# How PDB enforcement works:
+#   1. kubectl drain node-x (or autoscaler scales down)
+#   2. Kubernetes eviction API is called for each pod
+#   3. Before evicting, the API checks all PDBs that cover the pod
+#   4. If evicting this pod would violate any PDB, the eviction is REJECTED
+#   5. kubectl drain blocks and retries until the PDB allows eviction
+#      (e.g., when a replacement pod becomes ready on another node)
+#
+# minAvailable vs maxUnavailable:
+#   minAvailable: 2   → at least 2 pods must be Running at all times
+#                       drain blocks if running pods would drop below 2
+#   maxUnavailable: 1 → at most 1 pod can be unavailable at a time
+#                       usually expressed as a percentage: "25%"
+#
+# Apply:
+#   kubectl apply -f 02-pdb.yaml
+#
+# Test the PDB:
+#   kubectl drain <node> --ignore-daemonsets --delete-emptydir-data
+#   Observe: drain completes slowly (waits for replacements)
+#             or blocks with "Cannot evict pod as it would violate PDB"
+# ============================================================
+
+# --- Deployment protected by the PDB -------------------------
+# We deploy 4 replicas so the PDB math is easy to observe:
+#   minAvailable: 2 → at most 2 pods can be disrupted at once
+# With 4 replicas, draining a node with 3 pods on it will only
+# allow 2 evictions to proceed; the 3rd will block until a new pod
+# is Ready elsewhere.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: critical-app
+  namespace: day2-lab
+  labels:
+    app: critical-app
+    tier: frontend
+spec:
+  replicas: 4          # 4 replicas so PDB enforcement is clearly visible
+  selector:
+    matchLabels:
+      app: critical-app
+  # strategy: RollingUpdate is the default for Deployments.
+  # The PDB also gates rolling updates — Kubernetes won't create a new pod
+  # and delete an old one if the deletion would violate the PDB.
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1          # allow 1 extra pod during rollout
+      maxUnavailable: 0    # never have fewer than desired replicas during rollout
+                           # Note: if PDB minAvailable=2 and maxUnavailable=0 conflict,
+                           # the stricter of the two governs
+  template:
+    metadata:
+      labels:
+        app: critical-app
+        tier: frontend
+    spec:
+      # topologySpreadConstraints: spread pods across zones so that no single
+      # zone holds all the replicas. Without this, all 4 pods could be on nodes
+      # in the same zone, and a node drain in that zone would trigger the PDB.
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: topology.kubernetes.io/zone
+          whenUnsatisfiable: DoNotSchedule
+          labelSelector:
+            matchLabels:
+              app: critical-app
+      containers:
+        - name: critical-app
+          image: nginx:1.25-alpine
+          ports:
+            - containerPort: 80
+          # readinessProbe: a pod is only counted as Available by the PDB
+          # once its readiness probe passes. This is important — without a
+          # readiness probe, the pod is immediately considered Available after
+          # starting, even if the app isn't ready yet. The PDB would then
+          # count it as available and allow another eviction to proceed too soon.
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 5   # wait 5s after container start before probing
+            periodSeconds: 5         # probe every 5 seconds
+            successThreshold: 1      # 1 success = ready
+            failureThreshold: 3      # 3 consecutive failures = not ready
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+
+---
+# --- PodDisruptionBudget for the critical-app -----------------
+apiVersion: policy/v1      # policy/v1 is stable since Kubernetes 1.21
+                            # Use policy/v1beta1 only for clusters < 1.21 (DO NOT use in 2026)
+kind: PodDisruptionBudget
+metadata:
+  name: critical-app-pdb
+  namespace: day2-lab
+  labels:
+    app: critical-app
+    lab: "30"
+spec:
+  # selector: identifies which pods this PDB protects.
+  # Must match the labels on the Deployment's pod template.
+  # The PDB ONLY protects pods that match this selector —
+  # pods with different labels in the same namespace are NOT affected.
+  selector:
+    matchLabels:
+      app: critical-app
+
+  # minAvailable: the minimum number of pods that must remain Available
+  # (i.e., passing their readiness probe) during a disruption.
+  #
+  # With 4 replicas and minAvailable: 2:
+  #   - Kubernetes will allow at most 2 pods to be disrupted at once
+  #   - Draining a node that has all 4 pods: only 2 can be evicted; the
+  #     other 2 block until their replacements are Ready on other nodes
+  #
+  # Can also be a percentage: minAvailable: "50%"
+  #   With 4 replicas, 50% = 2 pods minimum available (rounds up)
+  minAvailable: 2
+
+  # Alternative: use maxUnavailable instead of minAvailable.
+  # ONLY ONE of minAvailable or maxUnavailable may be set.
+  # maxUnavailable: 1   → at most 1 pod can be unavailable at a time
+  # maxUnavailable: "25%" → at most 25% of replicas can be unavailable
+
+  # unhealthyPodEvictionPolicy: controls whether unhealthy pods (not passing
+  # readiness probe) count against the disruption budget.
+  # IfHealthyBudget (default): only apply PDB to healthy pods.
+  #   Unhealthy pods can be evicted freely — good for letting node drains proceed
+  #   even when some pods are already crashlooping.
+  # AlwaysAllow: always check the PDB before evicting, even unhealthy pods.
+  #   More protective but can block node drains if many pods are unhealthy.
+  unhealthyPodEvictionPolicy: IfHealthyBudget
+
+---
+# ============================================================
+# Bonus: PDB with percentage-based budget
+# ============================================================
+# This second PDB shows how to express the budget as a percentage.
+# Use percentages for deployments where the replica count changes
+# frequently (e.g., auto-scaled workloads) so you don't have to
+# update the PDB every time you change the replica count.
+# ============================================================
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: critical-app-pdb-percent
+  namespace: day2-lab
+  labels:
+    app: critical-app
+    pdb-type: percentage-example
+spec:
+  selector:
+    matchLabels:
+      app: critical-app   # same selector — both PDBs protect the same pods
+                           # Kubernetes takes the STRICTEST budget across all matching PDBs
+  # maxUnavailable as a percentage.
+  # With 4 replicas: 25% = 1 pod can be unavailable
+  # With 8 replicas: 25% = 2 pods can be unavailable
+  # The percentage rounds DOWN for maxUnavailable (conservative — stricter protection)
+  maxUnavailable: "25%"

@@ -1,0 +1,132 @@
+# ============================================================
+# Lab 26 — ArgoCD GitOps: Application (Git source)
+# ============================================================
+# An ArgoCD Application is the core resource in ArgoCD.
+# It defines:
+#   1. WHERE the desired state lives (source: a Git repo + path)
+#   2. WHERE to deploy it (destination: cluster + namespace)
+#   3. HOW to keep it in sync (syncPolicy)
+#
+# GitOps principle:
+#   Git is the single source of truth. ArgoCD continuously compares
+#   the live state of the cluster against the desired state in Git.
+#   Any drift (manual kubectl edits) is detected and can be auto-healed.
+#
+# This Application deploys the canonical ArgoCD example app "guestbook"
+# from the official argoproj/argocd-example-apps repository.
+# It uses plain YAML manifests (not Helm, not Kustomize) so you can
+# focus on the ArgoCD concepts without Helm complexity.
+#
+# Prerequisites:
+#   ArgoCD must be installed in the "argocd" namespace.
+#   Verify: kubectl get pods -n argocd
+#
+# Apply:
+#   kubectl apply -f 01-application.yaml
+#
+# Monitor in the UI:
+#   kubectl port-forward svc/argocd-server -n argocd 8080:443
+#   Open: https://localhost:8080
+#   App "guestbook" should appear and begin syncing.
+# ============================================================
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  # Name of this Application resource — visible in the ArgoCD UI and CLI
+  name: guestbook
+  # Applications MUST be created in the ArgoCD namespace.
+  # ArgoCD only watches its own namespace for Application resources.
+  namespace: argocd
+  labels:
+    # Optional labels — useful for filtering in the UI when you have many apps
+    lab: "26"
+    type: example
+  # finalizers: ArgoCD adds this finalizer so that when you delete the Application,
+  # it also deletes the Kubernetes resources it deployed (cascade delete).
+  # To delete the Application WITHOUT deleting deployed resources, remove this
+  # finalizer first: kubectl patch app guestbook -n argocd --type json
+  #   -p '[{"op":"remove","path":"/metadata/finalizers"}]'
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  # -------------------------------------------------------
+  # project: which AppProject this Application belongs to.
+  # "default" allows deploying to any cluster/namespace.
+  # In production, create restricted projects:
+  #   kubectl get appproject -n argocd
+  # -------------------------------------------------------
+  project: default
+
+  # -------------------------------------------------------
+  # source: where the desired state lives (Git in this case).
+  # ArgoCD supports Git, Helm, OCI, and directory sources.
+  # -------------------------------------------------------
+  source:
+    # repoURL: the Git repository to clone.
+    # This is a public repo so no credentials are needed.
+    # For private repos, add a repository secret first:
+    #   argocd repo add https://github.com/your-org/repo --username ... --password ...
+    repoURL: https://github.com/argoproj/argocd-example-apps.git
+
+    # targetRevision: which Git ref to track.
+    # Can be a branch name, tag, or commit SHA.
+    # HEAD tracks the default branch (main/master).
+    # In production, pin to a specific tag or SHA for immutability:
+    #   targetRevision: v1.2.3
+    targetRevision: HEAD
+
+    # path: the directory within the repo containing the manifests.
+    # ArgoCD will apply every .yaml/.yml file found recursively in this directory.
+    path: guestbook
+
+  # -------------------------------------------------------
+  # destination: which cluster and namespace to deploy to.
+  # -------------------------------------------------------
+  destination:
+    # server: the Kubernetes API server URL.
+    # "https://kubernetes.default.svc" means "the cluster ArgoCD is running in".
+    # For remote clusters, add them first: argocd cluster add <context-name>
+    server: https://kubernetes.default.svc
+
+    # namespace: where ArgoCD will create the manifests.
+    # ArgoCD will CREATE this namespace if it doesn't exist
+    # (when syncOptions includes CreateNamespace=true).
+    namespace: guestbook
+
+  # -------------------------------------------------------
+  # syncPolicy: how ArgoCD handles drift and deployments.
+  # -------------------------------------------------------
+  syncPolicy:
+    automated:
+      # prune: if a resource exists in the cluster but NOT in Git,
+      # ArgoCD will delete it. This keeps the cluster 100% in sync with Git.
+      # Set to false initially if you're not confident your Git state is complete.
+      prune: true
+
+      # selfHeal: if someone manually changes a resource in the cluster
+      # (e.g., kubectl edit deployment), ArgoCD will revert it back to the Git state.
+      # This is the core of GitOps enforcement.
+      # Disable temporarily during incidents: argocd app set guestbook --self-heal=false
+      selfHeal: true
+
+      # allowEmpty: if set to true, ArgoCD will sync even if the source produces
+      # zero resources (e.g., an empty directory). Default false is safer.
+      allowEmpty: false
+
+    syncOptions:
+      # CreateNamespace=true: ArgoCD creates the destination namespace if missing.
+      # Without this, the sync fails if the namespace doesn't exist.
+      - CreateNamespace=true
+
+      # ServerSideApply=true: uses kubectl server-side apply instead of client-side.
+      # Recommended for large resources and to avoid field-ownership conflicts.
+      - ServerSideApply=false
+
+    # retry: retry failed sync operations automatically.
+    # Prevents a transient API error from leaving the app out of sync permanently.
+    retry:
+      limit: 5                  # max number of retry attempts
+      backoff:
+        duration: 5s            # initial backoff duration
+        factor: 2               # multiply backoff by this factor on each retry
+        maxDuration: 3m         # cap backoff at 3 minutes

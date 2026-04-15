@@ -1,0 +1,277 @@
+# ============================================================
+# Lab 30 — Day 2 Operations: Velero Backup
+# ============================================================
+# Velero is an open-source tool for backing up and restoring
+# Kubernetes cluster resources and persistent volumes.
+#
+# Core concepts:
+#   Backup    — a point-in-time snapshot of selected K8s resources
+#               (namespace resources + optionally PV data)
+#   Schedule  — a CronJob that creates Backups on a time-based schedule
+#   Restore   — recreate resources from a completed Backup
+#   BackupStorageLocation (BSL) — where backup data is stored (GCS, S3, Azure Blob)
+#   VolumeSnapshotLocation (VSL) — where PV snapshots are stored (CSI snapshots)
+#
+# Velero backup flow:
+#   1. Velero API server receives a Backup CR
+#   2. It calls the Kubernetes API to list all resources in scope
+#   3. Resources are serialized to JSON and uploaded to the BSL (GCS bucket)
+#   4. For PVs, Velero triggers a CSI VolumeSnapshot or uses restic/kopia to
+#      back up the actual data
+#
+# Prerequisites:
+#   Velero must be installed in the "velero" namespace.
+#   Verify: kubectl get pods -n velero
+#   GCS bucket for backup storage must exist and be configured.
+#
+# Apply (Schedule):
+#   kubectl apply -f 01-velero-backup.yaml
+#
+# Trigger a one-off backup immediately:
+#   velero backup create test-backup-now --include-namespaces day2-lab \
+#     --from-schedule day2-lab-schedule --wait
+#
+# Or without the CLI, create a Backup CR directly:
+#   kubectl create -f - <<EOF
+#   apiVersion: velero.io/v1
+#   kind: Backup
+#   metadata:
+#     name: test-backup-now
+#     namespace: velero
+#   spec:
+#     includedNamespaces: [day2-lab]
+#   EOF
+# ============================================================
+
+# --- Test Namespace for the backup lab -----------------------
+# This namespace is what we will back up and then restore.
+# It contains a Deployment, ConfigMap, and Secret to demonstrate
+# that Velero captures all resource types.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: day2-lab
+  labels:
+    # Label the namespace so it can be selected in Velero backup scope
+    purpose: backup-lab
+    lab: "30"
+
+---
+# --- Sample Deployment (the workload to back up) ---------------
+# A simple nginx deployment with a ConfigMap and a Secret mounted.
+# After backup+restore, verify these mounts still work.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: demo-app
+  namespace: day2-lab
+  labels:
+    app: demo-app
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: demo-app
+  template:
+    metadata:
+      labels:
+        app: demo-app
+    spec:
+      containers:
+        - name: demo-app
+          image: nginx:1.25-alpine
+          ports:
+            - containerPort: 80
+          # Mount the ConfigMap and Secret so we can verify they survive restore
+          volumeMounts:
+            - name: app-config
+              mountPath: /etc/demo/config
+              readOnly: true
+            - name: app-secret
+              mountPath: /etc/demo/secrets
+              readOnly: true
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+      volumes:
+        - name: app-config
+          configMap:
+            name: demo-app-config    # references the ConfigMap below
+        - name: app-secret
+          secret:
+            secretName: demo-app-secret  # references the Secret below
+
+---
+# --- ConfigMap to include in the backup -----------------------
+# ConfigMaps contain non-sensitive configuration.
+# After restore, verify: kubectl exec <pod> -- cat /etc/demo/config/app.properties
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: demo-app-config
+  namespace: day2-lab
+  labels:
+    app: demo-app
+data:
+  # These key-value pairs are mounted as files in /etc/demo/config/
+  app.properties: |
+    environment=lab-30
+    log.level=INFO
+    feature.flags.new_ui=true
+    backup.test=this-config-survives-restore
+  database.url: "postgres://db.internal:5432/demo"
+
+---
+# --- Secret to include in the backup --------------------------
+# After restore, verify: kubectl exec <pod> -- cat /etc/demo/secrets/api-key
+# NOTE: Velero backs up Secret resources including their (base64-encoded) data.
+# For stronger security, consider Velero's encryption plugin or using external
+# secret management (AWS Secrets Manager, GCP Secret Manager) where the secret
+# data lives outside the cluster and only the reference is backed up.
+apiVersion: v1
+kind: Secret
+metadata:
+  name: demo-app-secret
+  namespace: day2-lab
+  labels:
+    app: demo-app
+type: Opaque
+stringData:
+  # stringData accepts plain text; Kubernetes base64-encodes it automatically
+  api-key: "lab-secret-key-do-not-use-in-production"
+  database-password: "lab-db-password-replace-in-production"
+
+---
+# --- Service for the demo-app ---------------------------------
+apiVersion: v1
+kind: Service
+metadata:
+  name: demo-app
+  namespace: day2-lab
+spec:
+  selector:
+    app: demo-app
+  ports:
+    - port: 80
+      targetPort: 80
+
+---
+# ============================================================
+# Velero Schedule CRD
+# ============================================================
+# A Schedule is a Velero custom resource that creates Backups
+# on a cron schedule, similar to a Kubernetes CronJob but for
+# the Velero backup operation itself.
+#
+# This schedule:
+#   - Backs up the "day2-lab" namespace every day at 02:00 UTC
+#   - Retains backups for 7 days (TTL)
+#   - Includes PV snapshots (if a CSI snapshot class is configured)
+# ============================================================
+apiVersion: velero.io/v1
+kind: Schedule
+metadata:
+  name: day2-lab-schedule
+  namespace: velero        # Velero CRDs must be in the velero namespace
+  labels:
+    lab: "30"
+spec:
+  # schedule: standard cron expression.
+  # Format: minute hour day-of-month month day-of-week
+  # This runs at 02:00 UTC every day.
+  schedule: "0 2 * * *"
+
+  # useOwnerReferencesInBackup: if true, backup resources owned by other resources
+  # (e.g., ReplicaSet pods) as part of the backup.
+  useOwnerReferencesInBackup: false
+
+  # template: the Backup spec that gets created on each schedule trigger.
+  # This is identical to what you would put in a manual Backup CR.
+  template:
+    # -------------------------------------------------------
+    # Scope: what to include/exclude
+    # -------------------------------------------------------
+
+    # includedNamespaces: only back up resources in these namespaces.
+    # Use ["*"] to back up all namespaces (cluster-wide backup).
+    includedNamespaces:
+      - day2-lab
+
+    # excludedNamespaces: skip these namespaces even if they match above.
+    # Always exclude system namespaces in full-cluster backups.
+    excludedNamespaces:
+      - kube-system
+      - kube-public
+      - kube-node-lease
+
+    # includedResources: only include specific API resource types.
+    # If omitted, ALL resource types in the namespace are included.
+    # Example to include only Deployments and ConfigMaps:
+    #   includedResources: [deployments, configmaps]
+    # Leave commented to back up everything:
+    # includedResources: []
+
+    # excludedResources: skip these resource types.
+    # Events are ephemeral and large — always exclude them.
+    excludedResources:
+      - events
+      - events.events.k8s.io
+
+    # labelSelector: only back up resources with these labels.
+    # Useful for backing up a single application within a shared namespace.
+    # If omitted, all resources in the included namespaces are backed up.
+    # labelSelector:
+    #   matchLabels:
+    #     app: demo-app
+
+    # -------------------------------------------------------
+    # Storage and retention
+    # -------------------------------------------------------
+
+    # storageLocation: name of the BackupStorageLocation CR to use.
+    # "default" refers to the BSL configured during Velero installation.
+    # Check available locations: kubectl get backupstoragelocation -n velero
+    storageLocation: default
+
+    # ttl: how long to retain this backup before Velero auto-deletes it.
+    # Format: hours (h), minutes (m), seconds (s)
+    # 168h = 7 days
+    ttl: 168h0m0s
+
+    # -------------------------------------------------------
+    # Volume backup
+    # -------------------------------------------------------
+
+    # snapshotVolumes: whether to snapshot PersistentVolumes.
+    # Requires a VolumeSnapshotLocation to be configured.
+    # Set to false if the namespace has no PVs (as in this lab).
+    snapshotVolumes: false
+
+    # defaultVolumesToFsBackup: use file-system backup (restic/kopia) for volumes
+    # that don't support CSI snapshots. Slower but more portable.
+    defaultVolumesToFsBackup: false
+
+    # -------------------------------------------------------
+    # Hooks: pre/post backup actions
+    # -------------------------------------------------------
+    # Hooks allow you to run commands before/after a pod is backed up.
+    # Common use cases:
+    #   - Flush database write buffers before snapshot (pre-hook)
+    #   - Notify monitoring after backup completes (post-hook)
+    # hooks:
+    #   resources:
+    #     - name: demo-app-flush
+    #       includedNamespaces: [day2-lab]
+    #       labelSelector:
+    #         matchLabels:
+    #           app: demo-app
+    #       pre:
+    #         - exec:
+    #             container: demo-app
+    #             command: ["/bin/sh", "-c", "nginx -s quit || true"]
+    #             onError: Continue
+    #             timeout: 30s
