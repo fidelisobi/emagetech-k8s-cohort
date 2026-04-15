@@ -101,6 +101,73 @@ Start with zero Git knowledge and finish understanding GitOps, ArgoCD, and the b
 
 ---
 
+
+#### 🔴 Senior Track — Cluster Infrastructure
+| # | Project | What You Build |
+|---|---------|---------------|
+| 16 | [Cluster Provisioning with Terraform](./projects/16-cluster-provisioning-terraform/) | GKE/EKS/AKS from scratch: VPC, IAM, node pools, spot instances |
+| 17 | [Cluster Upgrades & Node Management](./projects/17-cluster-upgrades/) | Zero-downtime K8s version upgrade, cordon/drain/uncordon, node recovery |
+| 18 | [Multi-Cluster Management with ArgoCD](./projects/18-multi-cluster-argocd/) | Register 3 clusters, ApplicationSet fleet management, promotion flow |
+
+#### 🔴 Senior Track — Service Mesh & Custom Extensions
+| # | Project | What You Build |
+|---|---------|---------------|
+| 19 | [Istio Service Mesh Deep Dive](./projects/19-istio-service-mesh/) | mTLS, traffic splitting, circuit breakers, fault injection, Kiali |
+| 20 | [Write a Kubernetes Operator](./projects/20-kubernetes-operator/) | CRD + reconciliation loop + auto-provisioning StatefulSet via kopf |
+| 21 | [Build a Custom Admission Webhook](./projects/21-admission-webhook/) | Mutating + validating webhooks, sidecar injection, policy enforcement |
+
+#### 🔴 Senior Track — FinOps & Performance
+| # | Project | What You Build |
+|---|---------|---------------|
+| 22 | [Kubernetes Cost Optimization](./projects/22-finops-cost-optimization/) | Kubecost, VPA right-sizing, spot nodes, FinOps report with savings |
+| 23 | [Performance Engineering & Load Testing](./projects/23-performance-load-testing/) | k6 at 10k+ RPS, bottleneck profiling, before/after p95 latency tuning |
+
+#### 🔴 Senior Track — Advanced Security
+| # | Project | What You Build |
+|---|---------|---------------|
+| 24 | [Backup, Restore & Disaster Recovery](./projects/24-backup-disaster-recovery/) | Velero, full namespace DR drill, measured RTO/RPO, runbook |
+| 25 | [CIS Benchmark Hardening](./projects/25-cis-benchmark-hardening/) | kube-bench, API server/etcd/kubelet hardening, audit logging |
+| 26 | [eBPF Networking with Cilium](./projects/26-ebpf-cilium/) | Replace CNI, L7 NetworkPolicies, Hubble observability, WireGuard encryption |
+
+#### 🔴 Senior Track — Platform Maturity
+| # | Project | What You Build |
+|---|---------|---------------|
+| 27 | [SLOs, Error Budgets & Toil Reduction](./projects/27-slo-error-budgets/) | SLI/SLO definitions, burn rate alerts, error budget dashboard, deployment freeze |
+| 28 | [vCluster: Virtual Kubernetes Clusters](./projects/28-vcluster/) | 3 isolated virtual clusters in one host, per-tenant isolation without cost of real clusters |
+
+---
+
+## 🗺️ Seniority Path
+
+The projects are designed to build on each other. Follow this path based on where you are:
+
+```
+🟢 JUNIOR (Projects 1–4)
+   Solid fundamentals: containers, raw YAML, RBAC, self-healing
+   Can deploy and manage a basic Kubernetes application
+
+🟡 MID-LEVEL (Projects 5–10)
+   Production patterns: GitOps, Helm, secrets, observability, zero-downtime deploys, policy
+   Can operate a production Kubernetes platform
+
+🔴 SENIOR — Phase 1 (Projects 11–15)
+   Real-world complexity: security hardening, IDPs, failure runbooks, AI workloads, capstone
+   Can build and own a full-stack platform
+
+🔴 SENIOR — Phase 2 (Projects 16–21)
+   Infrastructure ownership: Terraform provisioning, upgrades, multi-cluster, Istio, Operators, Webhooks
+   Can build the platform tools others use
+
+🔴 SENIOR — Phase 3 (Projects 22–28)
+   Business-level skills: FinOps, performance at scale, DR, CIS hardening, eBPF, SLOs, multi-tenancy
+   Can speak at the level of a Staff/Principal engineer
+```
+
+**You do not need to complete all 28 projects.** The first 15 make you job-ready. Projects 16–28 make you dangerous.
+
+
+---
+
 ### [k8s-prereqs/](./k8s-prereqs/recordings.md)
 All Zoom recordings and meeting links from the pre-requisite phase of the cohort — Linux fundamentals, cloud computing, and intro sessions (Jan–Mar 2026).
 
