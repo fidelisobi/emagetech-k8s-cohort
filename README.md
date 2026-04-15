@@ -18,7 +18,9 @@ Welcome to the official repository for the **Kubernetes January 2026 Cohort** by
 │
 ├── git-fundamentals/         # Beginner Git → GitOps with ArgoCD (8 tutorials)
 │
-├── projects/                 # 15 hands-on projects across 3 phases (Beginner → Real World)
+├── projects/                 # 28 hands-on projects across 3 phases (Beginner → Senior Track)
+│
+├── student-success/          # Accountability, office hours, mock interviews, job search, placement
 │
 └── TUTORIALS.md              # Curated tutorials and external learning resources
 ```
@@ -379,3 +381,4 @@ Use this to find your entry point:
 ---
 
 *Last updated: 2026-04-15 | Emagetech*
+
