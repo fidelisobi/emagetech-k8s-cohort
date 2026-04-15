@@ -192,21 +192,181 @@ Curated list of external tutorials, YouTube videos, and resources recommended by
 
 ---
 
-## 🗺️ Recommended Learning Path
 
+---
+
+## 🎓 The Complete Student Journey
+
+This is your roadmap from Day 1 to Day 1 of your new job. Every step is supported.
+
+```mermaid
+flowchart TD
+    A([🚀 Student Joins Cohort]) --> B
+
+    subgraph FOUNDATION ["📚 Phase 0 — Foundation  (Weeks 1–2)"]
+        B[Network Fundamentals
+Tutorials 01–08] --> C[Git Fundamentals
+Tutorials 01–08]
+        C --> D[Pre-Req Recordings
+Linux · Cloud · CLI tools]
+        D --> E[Run setup.sh
+Install all tooling]
+    end
+
+    E --> F
+
+    subgraph CLASS ["🖥️ Phase 1 — The Class  (Sessions 11–30)"]
+        F[Kickoff Session
+Intros + Curriculum Overview] --> G
+        G[Sessions 11–20
+Pods · RBAC · Networking
+Storage · Controllers · Helm] --> H
+        H[Sessions 21–30
+ArgoCD · Istio · Kyverno
+Observability · CI/CD · Day 2 Ops] --> I
+        I[Weekly Labs
+20 Hands-On Labs
+One per session]
+    end
+
+    I --> J
+
+    subgraph PROJECTS ["🔨 Phase 2 — Projects  (Ongoing during + after class)"]
+        J[🟢 Junior 1–4
+Individual
+Containerize · YAML · RBAC · HPA] --> K
+        K[🟡 Mid-Level 5–10
+Pairs
+GitOps · Helm · Secrets · Observability
+Zero-Downtime · Policy] --> L
+        L[🔴 Senior Phase 1 — 11–15
+Teams of 2–3
+NeuVector · IDP · Runbooks · AI · Capstone] --> M
+        M[🔴 Senior Phase 2 — 16–21
+Terraform · Upgrades · Multi-Cluster
+Istio · Operator · Webhook] --> N
+        N[🔴 Senior Phase 3 — 22–28
+FinOps · Load Testing · DR
+CIS · Cilium · SLOs · vCluster]
+    end
+
+    N --> O
+
+    subgraph CAREER ["💼 Phase 3 — Career Prep  (Final 4 weeks)"]
+        O[Resume Workshop
+career/resume-guide.md
+Bullet points · Projects section
+GitHub profile] --> P
+        P[Interview Prep
+career/interview-questions.md
+60+ questions with model answers
+Technical + Behavioral] --> Q
+        Q[Portfolio Polish
+career/portfolio-guide.md
+Pin repos · Write READMEs
+Practice the 3-min walkthrough] --> R
+        R[LinkedIn Optimization
+career/linkedin-guide.md
+Headline · About · Skills
+Recruiter-ready profile]
+    end
+
+    R --> S
+
+    subgraph HUNT ["🔍 Phase 4 — Job Search"]
+        S[Apply & Network
+career/job-search-strategy.md
+CNCF job board · LinkedIn
+Cohort referrals] --> T
+        T[Recruiter Screens
+30-min phone calls
+Tech stack questions
+Salary range discussion] --> U
+        U[Technical Interviews
+Live K8s debugging
+System design
+Behavioral STAR answers] --> V
+        V[Offer & Negotiation
+Salary · Equity · Remote
+Always counter-offer]
+    end
+
+    V --> W
+
+    subgraph PLACEMENT ["🏆 Phase 5 — Job Placement"]
+        W([✅ Offer Accepted!
+Kubernetes Engineer Role]) --> X
+        X[Emagetech Reference
+Kenna + TAs as references
+LinkedIn endorsements] --> Y
+        Y[Alumni Network
+Connect classmates
+Refer each other
+Share job openings]
+    end
+
+    Y --> Z
+
+    subgraph ONGOING ["🔄 Phase 6 — Ongoing Support"]
+        Z[Slack Channel
+Forever access
+Questions · Resources
+Job postings] --> AA
+        AA[CKA Study Support
+Certification prep
+Exam tips from alumni
+Study groups] --> BB
+        BB[Alumni Hall of Fame
+Share your win
+Inspire next cohort
+Build your brand]
+    end
+
+    BB --> CC([🎯 Senior Engineer
+Continue Projects 16–28
+Build. Grow. Mentor.])
+
+    style A fill:#2ea44f,color:#fff
+    style FOUNDATION fill:#f0f9ff,stroke:#0284c7
+    style CLASS fill:#fefce8,stroke:#ca8a04
+    style PROJECTS fill:#fff7ed,stroke:#ea580c
+    style CAREER fill:#fdf4ff,stroke:#9333ea
+    style HUNT fill:#f0fdf4,stroke:#16a34a
+    style PLACEMENT fill:#eff6ff,stroke:#2563eb
+    style ONGOING fill:#fef2f2,stroke:#dc2626
+    style CC fill:#7c3aed,color:#fff
 ```
-New to everything?
-  └── network-fundamentals/ (01–05) → git-fundamentals/ (01–05)
-        └── k8s-prereqs/ recordings
-              └── class-materials/ (Sessions 11–30)
-                    └── projects/ (01–04 solo → 05–10 pairs → 11–15 teams)
 
-Already have networking + Git basics?
-  └── k8s-prereqs/ → class-materials/ → projects/
+---
 
-Fast-tracking?
-  └── class-materials/ + projects/ in parallel
-```
+## 📍 Where Are You Right Now?
+
+Use this to find your entry point:
+
+| Your Situation | Start Here |
+|----------------|-----------|
+| 🆕 Brand new to tech | [network-fundamentals/01](./network-fundamentals/01-what-is-a-network.md) |
+| Know basic Linux, new to K8s | [k8s-prereqs/recordings.md](./k8s-prereqs/recordings.md) |
+| Watched pre-req sessions | [class-materials/](./class-materials/) |
+| In the class, want to get ahead | [projects/01](./projects/01-containerize-multi-tier-app/) |
+| Finished class, job hunting | [career/resume-guide.md](./career/resume-guide.md) |
+| Placed, want senior level | [projects/16](./projects/16-cluster-provisioning-terraform/) |
+
+---
+
+## ⏱️ Time Expectations
+
+| Phase | Duration | Commitment |
+|-------|----------|-----------|
+| Foundation (Phase 0) | 1–2 weeks | 2–3 hrs/day |
+| The Class (Phase 1) | 10 weeks | 2 sessions/week + labs |
+| Junior Projects 1–4 | 2 weeks | 1 project every 3–4 days |
+| Mid-Level Projects 5–10 | 3 weeks | 1 project every 3–5 days |
+| Senior Projects 11–15 | 3 weeks | 1 project per week (team) |
+| Senior Projects 16–28 | Ongoing | 1 project/week at your pace |
+| Career Prep | 2–4 weeks | 2–3 hrs/day |
+| Job Search | 4–8 weeks | Applications + interviews |
+| **Total: Job-Ready** | **~5–6 months** | |
 
 ---
 
