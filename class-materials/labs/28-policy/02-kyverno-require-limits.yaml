@@ -1,0 +1,106 @@
+# ============================================================
+# Lab 28 — Policy: Kyverno — Require Resource Limits
+# ============================================================
+# Containers without resource limits can consume unbounded
+# CPU and memory, causing the "noisy neighbor" problem:
+# one rogue pod can starve other workloads on the same node.
+#
+# This policy ensures EVERY container in every pod has both:
+#   - resources.limits.cpu    (e.g. "500m")
+#   - resources.limits.memory (e.g. "256Mi")
+#
+# NOTE: This policy iterates over the containers array using
+# the `foreach` pattern, which validates each container
+# individually rather than checking the pod-level spec.
+#
+# Apply:
+#   kubectl apply -f 02-kyverno-require-limits.yaml
+#
+# Test — should FAIL (no limits):
+#   kubectl run no-limits --image=nginx \
+#     --labels="app=test,team=lab" -n default
+#
+# Test — should PASS (with limits):
+#   kubectl apply -f - <<EOF
+#   apiVersion: v1
+#   kind: Pod
+#   metadata:
+#     name: with-limits
+#     labels: { app: test, team: lab }
+#   spec:
+#     containers:
+#       - name: nginx
+#         image: nginx
+#         resources:
+#           limits:
+#             cpu: "200m"
+#             memory: "128Mi"
+#   EOF
+# ============================================================
+
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: require-resource-limits
+  annotations:
+    policies.kyverno.io/title: "Require CPU and Memory Limits"
+    policies.kyverno.io/category: "Resource Management"
+    policies.kyverno.io/severity: "high"
+    policies.kyverno.io/description: >-
+      All containers must declare CPU and memory limits to prevent
+      resource exhaustion and ensure predictable scheduling.
+spec:
+  validationFailureAction: Enforce
+  background: true
+
+  rules:
+    - name: check-container-limits
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+
+      exclude:
+        any:
+          - resources:
+              namespaces:
+                - kube-system
+                - kube-public
+                - kube-node-lease
+                - kyverno
+                - istio-system
+                - cert-manager
+
+      validate:
+        message: >-
+          All containers must specify both cpu and memory limits.
+          Example:
+            resources:
+              limits:
+                cpu: "500m"
+                memory: "256Mi"
+
+        # foreach: iterate over each container in the pod's containers array.
+        # Each element in the array is validated against the `pattern`.
+        foreach:
+          - list: "request.object.spec.containers"   # iterate over containers[]
+            pattern:
+              resources:
+                limits:
+                  cpu: "?*"       # cpu limit must be present and non-empty
+                  memory: "?*"    # memory limit must be present and non-empty
+
+          # Also check initContainers (often overlooked)
+          - list: "request.object.spec.initContainers"
+            preconditions:
+              # Only validate if initContainers is not null/empty
+              any:
+                - key: "{{ request.object.spec.initContainers[] | length(@) }}"
+                  operator: GreaterThanOrEquals
+                  value: "1"
+            pattern:
+              resources:
+                limits:
+                  cpu: "?*"
+                  memory: "?*"

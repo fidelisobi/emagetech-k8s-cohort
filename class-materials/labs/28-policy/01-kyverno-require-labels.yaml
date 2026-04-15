@@ -1,0 +1,91 @@
+# ============================================================
+# Lab 28 — Policy: Kyverno — Require Labels on All Pods
+# ============================================================
+# Kyverno is a Kubernetes-native policy engine. Policies are
+# written as YAML (no Rego/OPA knowledge required) and are
+# enforced by a validating/mutating admission webhook.
+#
+# This ClusterPolicy requires every Pod to have both:
+#   - app label
+#   - team label
+#
+# Without these labels, the pod creation will be BLOCKED
+# (validationFailureAction: Enforce).
+#
+# During development, use validationFailureAction: Audit
+# to log violations WITHOUT blocking — helps you understand
+# the blast radius before enforcing.
+#
+# Prerequisites:
+#   Kyverno must be installed:
+#     kubectl get pods -n kyverno
+#
+# Apply:
+#   kubectl apply -f 01-kyverno-require-labels.yaml
+#
+# Test — should FAIL:
+#   kubectl run no-labels --image=nginx -n default
+#
+# Test — should PASS:
+#   kubectl run good-pod --image=nginx \
+#     --labels="app=myapp,team=platform" -n default
+# ============================================================
+
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy              # ClusterPolicy = applies to ALL namespaces
+metadata:
+  name: require-pod-labels
+  annotations:
+    # These annotations are surfaced in kyverno policy reports and UI tools
+    policies.kyverno.io/title: "Require App and Team Labels"
+    policies.kyverno.io/category: "Best Practices"
+    policies.kyverno.io/severity: "medium"
+    policies.kyverno.io/description: >-
+      Every pod must have 'app' and 'team' labels to enable
+      cost attribution, operational filtering, and service discovery.
+spec:
+  # validationFailureAction controls what happens when a resource violates the policy:
+  #   Enforce → BLOCK the request (admission denied)
+  #   Audit   → LOG the violation but allow the request (good for dry-run)
+  validationFailureAction: Enforce
+
+  # background: if true, Kyverno also scans EXISTING resources
+  # in the cluster and reports violations (does not block them retroactively).
+  background: true
+
+  rules:
+    - name: check-required-labels
+      # match: which resources this rule applies to.
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod           # applies to Pod objects directly
+
+      # exclude: skip resources we don't want to enforce on.
+      # System namespaces should be excluded to avoid breaking cluster components.
+      exclude:
+        any:
+          - resources:
+              namespaces:
+                - kube-system
+                - kube-public
+                - kube-node-lease
+                - kyverno        # don't enforce on Kyverno's own pods
+                - istio-system
+                - cert-manager
+
+      validate:
+        # message: shown to users when the policy blocks their request.
+        # Make it actionable — tell them WHAT to add.
+        message: >-
+          Pod is missing required labels. Add both 'app' and 'team' labels.
+          Example: kubectl label pod <name> app=myapp team=platform
+
+        # pattern: the resource must MATCH this pattern to be allowed.
+        # A "?" means the key must exist with a non-empty value.
+        pattern:
+          metadata:
+            labels:
+              app: "?*"     # key "app" must exist and be non-empty ("?" = at least 1 char)
+              team: "?*"    # key "team" must exist and be non-empty

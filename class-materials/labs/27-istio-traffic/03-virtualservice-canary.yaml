@@ -1,0 +1,65 @@
+# ============================================================
+# Lab 27 — Istio Traffic Management: Step 3 — Canary (80/20)
+# ============================================================
+# This VirtualService splits traffic between v1 (stable) and
+# v2 (canary) using weighted routing.
+#
+# Weight values are PERCENTAGES and must sum to 100.
+#
+# Canary deployment strategy:
+#   Start:   v1=100, v2=0    (v2 deployed but receiving no traffic)
+#   Stage 1: v1=80,  v2=20   ← this file
+#   Stage 2: v1=50,  v2=50
+#   Stage 3: v1=20,  v2=80
+#   Done:    v1=0,   v2=100  (v2 fully promoted)
+#
+# Apply:
+#   kubectl apply -f 03-virtualservice-canary.yaml
+#
+# Generate traffic and observe the split:
+#   # Loop 20 times — ~16 should return v1, ~4 should return v2
+#   for i in $(seq 1 20); do
+#     kubectl exec -n bookinfo deploy/ratings-v1 -- \
+#       curl -s http://reviews:9080/reviews/1 | grep -o '"color":"[^"]*"'
+#   done
+# ============================================================
+
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: reviews
+  namespace: bookinfo
+spec:
+  hosts:
+    - reviews
+
+  http:
+    # --- Rule 1: Header-based routing (for testing canary) ----------
+    # Requests with header  end-user: canary-tester  always go to v2.
+    # This lets QA engineers test v2 without affecting production traffic.
+    - name: "canary-header-override"
+      match:
+        - headers:
+            end-user:
+              exact: canary-tester     # exact header value match
+      route:
+        - destination:
+            host: reviews
+            subset: v2
+          weight: 100
+
+    # --- Rule 2: Weighted split for everyone else ------------------
+    - name: "production-weighted-split"
+      # No match conditions → matches all remaining requests
+      route:
+        - destination:
+            host: reviews
+            subset: v1               # stable: 80% of general traffic
+          weight: 80
+
+        - destination:
+            host: reviews
+            subset: v2               # canary: 20% of general traffic
+          weight: 20
+
+        # NOTE: weights must sum to 100 or Istio will reject the rule.

@@ -1,0 +1,134 @@
+# ============================================================
+# Lab 23 — Scaling: HorizontalPodAutoscaler
+# ============================================================
+# The HorizontalPodAutoscaler (HPA) automatically adjusts the
+# number of pod replicas in a Deployment (or ReplicaSet/StatefulSet)
+# based on observed metrics.
+#
+# HPA control loop (runs every 15 seconds by default):
+#   1. Fetch current metric value from Metrics Server
+#   2. Calculate desired replicas:
+#      desiredReplicas = ceil(currentReplicas * (currentMetric / targetMetric))
+#   3. Scale up or down, respecting min/max bounds
+#
+# Prerequisites:
+#   Metrics Server must be running:
+#     kubectl get deployment metrics-server -n kube-system
+#   GKE has Metrics Server enabled by default.
+#
+# Apply:
+#   kubectl apply -f 01-hpa.yaml
+#
+# Watch scaling:
+#   kubectl get hpa php-apache-hpa -n scaling-lab -w
+# ============================================================
+
+# --- Namespace -----------------------------------------------
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: scaling-lab
+
+---
+# --- Target Deployment ---------------------------------------
+# A simple PHP/Apache web server — the HPA will scale this.
+# We use the official load-testing image from the K8s docs.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: php-apache
+  namespace: scaling-lab
+spec:
+  replicas: 1               # HPA will override this after initial apply
+  selector:
+    matchLabels:
+      app: php-apache
+  template:
+    metadata:
+      labels:
+        app: php-apache
+    spec:
+      containers:
+        - name: php-apache
+          image: registry.k8s.io/hpa-example  # generates CPU load when hit
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              # IMPORTANT: HPA requires resource REQUESTS to be set.
+              # It calculates CPU % relative to the request value.
+              # "200m" = 200 millicores = 0.2 CPU cores
+              cpu: "200m"
+              memory: "64Mi"
+            limits:
+              cpu: "500m"
+              memory: "128Mi"
+
+---
+# --- Service -------------------------------------------------
+apiVersion: v1
+kind: Service
+metadata:
+  name: php-apache
+  namespace: scaling-lab
+spec:
+  selector:
+    app: php-apache
+  ports:
+    - port: 80
+      targetPort: 80
+
+---
+# --- HorizontalPodAutoscaler ---------------------------------
+apiVersion: autoscaling/v2           # v2 supports multiple metrics
+kind: HorizontalPodAutoscaler
+metadata:
+  name: php-apache-hpa
+  namespace: scaling-lab
+spec:
+  # scaleTargetRef: which workload to scale.
+  # The HPA watches this deployment and adjusts its replicas field.
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: php-apache                  # must match the Deployment name above
+
+  # Replica bounds — HPA will never go below min or above max.
+  minReplicas: 2                      # always keep at least 2 pods running
+  maxReplicas: 10                     # hard cap to control costs
+
+  metrics:
+    # --- CPU Utilization Metric --------------------------------
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          # Utilization: percentage of the resource REQUEST.
+          # 70% means: if a pod uses >70% of its requested CPU,
+          # scale up; if using <70%, scale down.
+          type: Utilization
+          averageUtilization: 70      # target 70% average CPU across all pods
+
+  # behavior: controls how fast the HPA can scale up/down.
+  # This prevents flapping (rapid scale up then back down).
+  behavior:
+    scaleUp:
+      # Allow scaling up by at most 2 pods per 60 seconds.
+      stabilizationWindowSeconds: 0  # scale up immediately when needed
+      policies:
+        - type: Pods
+          value: 2                    # add up to 2 pods per period
+          periodSeconds: 60
+        - type: Percent
+          value: 100                  # or double the current count — whichever is higher
+          periodSeconds: 60
+      selectPolicy: Max               # use the policy that allows the most scale-up
+
+    scaleDown:
+      # Wait 5 minutes of sustained low load before scaling down.
+      # This prevents premature scale-down if load spikes briefly.
+      stabilizationWindowSeconds: 300
+      policies:
+        - type: Pods
+          value: 1                    # remove at most 1 pod per period
+          periodSeconds: 60
