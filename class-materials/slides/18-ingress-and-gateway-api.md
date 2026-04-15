@@ -325,3 +325,20 @@ This lets `team-a`'s HTTPRoutes reference Services in `shared-services`, while t
 - **ReferenceGrant** is the Gateway API mechanism that explicitly permits cross-namespace references — without it, routes cannot reach Services in other namespaces.
 - **Header-based routing, traffic splitting, and URL rewrites** are first-class citizens in Gateway API — no annotations required.
 - Both Ingress and Gateway API can coexist; most modern controllers support both.
+
+---
+
+## Review Questions
+
+### Beginner
+
+1. What is an Ingress controller, and why is it required for an Ingress resource to work?
+2. What is the purpose of the `defaultBackend` field in an Ingress resource?
+3. What is the difference between `Exact` and `Prefix` path types in an Ingress rule?
+4. What is `IngressClass`, and can it be scoped to a specific namespace?
+5. In the Gateway API model, which resource is managed by the application developer, and which is managed by the cluster operator?
+
+### Intermediate
+
+1. You are migrating a multi-team cluster from Ingress to Gateway API. Team A's HTTPRoute in the `team-a` namespace needs to route to a shared Service in the `platform` namespace. What Gateway API resource must exist in the `platform` namespace to allow this, and who should own it?
+2. A product team wants to gradually roll out a new version of their API by sending 10% of traffic to a canary deployment. Compare how you would achieve this with a traditional Ingress controller versus Gateway API's HTTPRoute, and explain why one approach is more portable than the other.

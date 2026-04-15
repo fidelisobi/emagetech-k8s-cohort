@@ -257,3 +257,21 @@ containers:
 - **Projected volumes** let you combine ConfigMaps, Secrets, and Downward API data under a single mount path.
 - **Downward API** lets pods be self-aware — useful for logging, tracing, and dynamic configuration.
 - Set `immutable: true` on stable ConfigMaps/Secrets to protect against accidental changes and reduce API server load.
+
+---
+
+## Review Questions
+
+### Beginner
+
+1. Why is it bad practice to hardcode configuration values directly into a container image? What does a ConfigMap solve?
+2. What is the size limit for a ConfigMap, and what are the three ways to inject ConfigMap data into a pod?
+3. Why is base64 encoding in Kubernetes Secrets not the same as encryption? What should you use in production instead?
+4. What is the Downward API, and give two examples of pod metadata you could expose to a container using it?
+5. What does setting `immutable: true` on a ConfigMap or Secret do, and what are the benefits?
+
+### Intermediate
+
+1. Your application reads its database password from an environment variable that comes from a Kubernetes Secret. A security audit finds the raw Secret value in the application's crash logs. What are two different ways this could have happened, and how would you prevent each?
+2. You have a pod that needs three pieces of data at the same mount path: an `app.properties` file from a ConfigMap, a `db-password` file from a Secret, and the pod's own name. What Kubernetes feature lets you do this, and sketch the relevant YAML structure?
+3. What is the difference between using `data` and `stringData` when creating a Secret manifest? What do you actually see when you run `kubectl get secret <name> -o yaml` regardless of which field you used?

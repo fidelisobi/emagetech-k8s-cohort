@@ -845,3 +845,21 @@ Your existing `ServiceMonitor` and `PodMonitor` CRDs continue to work — no mig
 - **Grafana Loki** keeps log costs low by indexing only labels, not log content — the trade-off is that full-text search is slower than Elasticsearch but sufficient for label-driven workflows.
 - The **kube-prometheus-stack** Helm chart is the fastest path to a production-grade observability stack (Prometheus + Alertmanager + Grafana + pre-built K8s dashboards) on any cluster.
 - **OpenTelemetry** is the emerging standard for instrumentation — instrument your application once with the OTel SDK and route signals to whatever backend you choose.
+
+---
+
+## Review Questions
+
+### Beginner
+
+1. What are the three pillars of observability, and what question does each one answer when you are investigating an incident?
+2. What is the difference between the USE and RED metric frameworks? Give one example metric that belongs to each.
+3. Prometheus uses a pull model to collect metrics. What does that mean in practice — what must the application expose, and what does Prometheus do with it?
+4. What is a `ServiceMonitor` CRD, and why is it the preferred way to configure Prometheus scrape targets in a Kubernetes cluster?
+5. What is the key design difference between Grafana Loki and Elasticsearch-based log solutions, and what is the main trade-off of Loki's approach?
+
+### Intermediate
+
+1. An alert fires indicating high error rates for a microservice. Describe how you would use all three observability pillars in sequence — metrics, logs, and traces — to go from the initial alert to identifying the root cause in a distributed system.
+2. Your team is building a new Python microservice and needs to track both infrastructure health (CPU, memory) and a custom business metric (orders processed per minute). Compare using the Prometheus client library versus the OpenTelemetry SDK for this use case, including the instrumentation model, what each approach gives you out of the box, and which you would recommend for a system that may switch observability backends in the future.
+3. A new application is deployed to GKE but does not appear in Grafana dashboards and Prometheus shows no metrics for it. Walk through the full chain of components you would inspect — from the application's `/metrics` endpoint through the Prometheus Operator to Grafana — to find where the pipeline is broken.

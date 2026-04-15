@@ -265,3 +265,21 @@ spec:
 - **Jobs** support parallel execution via `completions` + `parallelism`; useful for batch workloads like data migrations.
 - **CronJobs** default `startingDeadlineSeconds` is `nil` (no deadline) — not 30s. Set it explicitly if your job is time-sensitive.
 - Choose your controller based on workload type: Deployment for stateless, StatefulSet for stateful, DaemonSet for node-level agents, Job/CronJob for finite tasks.
+
+---
+
+## Review Questions
+
+### Beginner
+
+1. What is the relationship between a Deployment, a ReplicaSet, and a Pod? Why does Kubernetes keep old ReplicaSets around at 0 replicas?
+2. What is the difference between `maxSurge` and `maxUnavailable` in a RollingUpdate strategy? What happens if you set both to 0?
+3. What is a DaemonSet used for, and how does it decide how many pod replicas to run?
+4. What is the key difference between a Job and a CronJob? Give one practical use case for each.
+5. What makes a StatefulSet different from a Deployment when it comes to pod naming and storage?
+
+### Intermediate
+
+1. You have a Deployment with 5 replicas and need to roll out a new image version with zero downtime and the ability to instantly roll back. What `strategy` settings would you configure, and what `kubectl` command would you run to revert to the previous version if the rollout goes wrong?
+2. A StatefulSet pod (`postgres-1`) gets killed because its node fails. Explain why the pod might not automatically come back up, how that differs from how a Deployment handles node failures, and what you would need to do to recover.
+3. What is the difference between the Canary and Blue/Green deployment strategies? For each one, describe a scenario where it would be the better choice and identify which additional Kubernetes tooling would be required to implement it.

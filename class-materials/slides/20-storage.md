@@ -191,3 +191,20 @@ spec:
 - RWX access requires a file-based backend (NFS, Filestore, EFS, Azure Files) — block storage (EBS, GCE PD, Azure Disk) is RWO only
 - VolumeSnapshots require a CSI driver and the snapshot CRDs to be installed separately
 - StatefulSet PVCs outlive their pods by design — delete them explicitly when no longer needed
+
+---
+
+## Review Questions
+
+### Beginner
+
+1. What is the difference between a PersistentVolume (PV) and a PersistentVolumeClaim (PVC)? Which one does a Pod reference directly?
+2. What does a StorageClass define, and how does it relate to dynamic provisioning?
+3. What is the difference between the `Retain` and `Delete` reclaim policies, and when would you choose each?
+4. Which access mode would you use if you need multiple pods across different nodes to read and write to the same volume simultaneously?
+5. Why is `WaitForFirstConsumer` the preferred volume binding mode in multi-zone clusters?
+
+### Intermediate
+
+1. A StatefulSet named `db` has 3 replicas and uses a `volumeClaimTemplate` named `data`. You scale the StatefulSet down to 1 replica. What happens to the PVCs for the two removed pods, and what action must you take if you want to fully clean up the storage?
+2. A developer asks you to expand a PVC from 10Gi to 50Gi. Walk through what conditions must be true for this to succeed and what steps are involved, including any potential impact on a running Pod.

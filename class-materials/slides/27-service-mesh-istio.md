@@ -300,3 +300,20 @@ Built-in observability through Envoy sidecars:
 4. **Start with PERMISSIVE mTLS, graduate to STRICT** — PERMISSIVE allows unmeshed services to still communicate during rollout; flip to STRICT once all workloads have sidecars.
 5. **Egress Gateway = outbound choke point** — route all external traffic through the Egress Gateway to enforce policies and audit what leaves the cluster.
 6. **Operational cost is real** — a service mesh adds ~10 ms of latency per hop and increases resource usage; validate that the benefits outweigh the overhead before adopting in latency-sensitive systems.
+
+---
+
+## Review Questions
+
+### Beginner
+
+1. What is a service mesh, and what four categories of problems does it solve that application code alone would otherwise need to handle?
+2. How does Istio inject the Envoy sidecar into a pod, and what does the application container need to change to make this work?
+3. What is the difference between `VirtualService` and `DestinationRule` in Istio? Give a one-sentence description of what each CRD controls.
+4. What are the three `PeerAuthentication` mTLS modes (`STRICT`, `PERMISSIVE`, `DISABLE`), and in which scenario would you use `PERMISSIVE` rather than `STRICT`?
+5. What is the primary purpose of an Istio Egress Gateway, and why is routing outbound traffic through it valuable from a security perspective?
+
+### Intermediate
+
+1. Your team wants to roll out a new version of a payment service with minimal risk. Describe how you would use Istio `VirtualService` and `DestinationRule` together to implement a canary deployment that starts at 10% traffic and allows specific testers to always hit the new version via a request header.
+2. A monolithic application is being broken into 12 microservices. A teammate argues that you should adopt Istio immediately for the security and observability benefits. Another teammate argues the operational overhead outweighs the gains at this stage. What factors would you evaluate to make this decision, and under what conditions would you recommend deferring the service mesh adoption?

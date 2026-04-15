@@ -243,3 +243,20 @@ This ensures pods are spread evenly across availability zones (hard) and across 
 - **Topology Spread Constraints** are the modern, flexible replacement for pod anti-affinity rules when spreading across zones or nodes.
 - **Taints/tolerations** and **node affinity** give you fine-grained control for dedicated workloads (GPUs, spot nodes, compliance-isolated nodes).
 - In GKE, **Autopilot** removes node management entirely; in Standard mode you manage node pools and wire in Cluster Autoscaler yourself.
+
+---
+
+## Review Questions
+
+### Beginner
+
+1. What is the difference between the Horizontal Pod Autoscaler (HPA) and the Vertical Pod Autoscaler (VPA)? What problem does each solve?
+2. Why does HPA require resource `requests` to be set on containers in order to work correctly?
+3. What is the role of the Cluster Autoscaler, and what two conditions trigger it to add or remove nodes?
+4. What is the difference between a `NoSchedule` taint and a `NoExecute` taint? How does a pod gain the right to run on a tainted node?
+5. What is `maxSkew` in a Topology Spread Constraint, and what does `whenUnsatisfiable: DoNotSchedule` mean for new pods?
+
+### Intermediate
+
+1. Your HPA is scaling pods up correctly during a traffic spike, but the new pods are stuck in `Pending` for several minutes. Describe what is happening at each layer (HPA, pods, Cluster Autoscaler) and what you would check to confirm the system is working as expected versus genuinely broken.
+2. You need to ensure that no two replicas of a latency-sensitive application land on the same availability zone, but you also want the scheduler to make a best-effort attempt to spread pods across individual nodes within each zone. Explain which Kubernetes features you would use and why you would choose each for its respective constraint.

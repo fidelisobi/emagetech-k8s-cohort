@@ -175,3 +175,21 @@ kubectl create deployment nginx --image=nginx --dry-run=client -o yaml > deploym
 - **kubeconfig** holds all the information kubectl needs to connect: cluster endpoints, credentials, and named contexts that combine them.
 - Prefer **declarative** (`kubectl apply -f`) over imperative commands in production — it is version-controllable, repeatable, and auditable.
 - Use `--dry-run=client -o yaml` to generate and inspect manifests before applying them, and remember that `kubectl top` requires metrics-server to be present in the cluster.
+
+---
+
+## Review Questions
+
+### Beginner
+
+1. What are the four parts of the `kubectl` command syntax, and what does each part represent?
+2. Where does kubectl look for connection information by default, and what are the three sections of a kubeconfig file?
+3. What is the difference between `kubectl apply` and `kubectl create`? When would you choose one over the other?
+4. What command would you run to shell into a running container, and what does the `--` separator do?
+5. What does `kubectl describe pod <name>` show that `kubectl get pod <name>` does not?
+
+### Intermediate
+
+1. A colleague runs `kubectl top pods` and gets an error. What is the most likely cause, and how would you fix it?
+2. You need to make a change to a Deployment manifest but want to validate it without applying it to the cluster. What command would you run, and what does "client-side validation" actually check?
+3. Explain the steps kubectl takes between you pressing Enter on `kubectl apply -f deployment.yaml` and the resource being persisted to etcd — include authentication and admission in your answer.

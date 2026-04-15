@@ -306,3 +306,20 @@ releases:
 - `helm template` lets you preview the fully-rendered Kubernetes YAML before applying anything to the cluster — invaluable for debugging templates.
 - The Go template `include "mychart.fullname" .` pattern keeps resource names scoped to the release, allowing multiple instances of the same chart in the same cluster.
 - Helmfile is the GitOps-friendly layer on top of Helm — declare all your releases in one file and manage them as a unit.
+
+---
+
+## Review Questions
+
+### Beginner
+
+1. What is the difference between a Helm chart, a release, and a repository? Use an analogy if it helps.
+2. What command would you run to see the default configuration values for a chart before installing it?
+3. What does `helm upgrade --install` do, and why is it preferred over `helm install` in CI/CD pipelines?
+4. What is the purpose of the `_helpers.tpl` file in a Helm chart, and what does the `include "mychart.fullname" .` pattern typically produce?
+5. Describe the Helm chart render pipeline: what inputs go in, what processing happens, and what comes out at the end?
+
+### Intermediate
+
+1. You have installed a Helm chart and a subsequent upgrade has broken the application. Walk through the commands you would use to investigate the release history, inspect what changed in the failing revision, and roll back to a known-good state.
+2. A colleague suggests using `--set` flags in a deploy script to override ten different chart values. Explain two reasons why a `values.yaml` file is a better approach, and describe how you would structure the override file for a multi-environment setup (dev, staging, prod).

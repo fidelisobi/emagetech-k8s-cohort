@@ -287,3 +287,21 @@ spec:
 - Set `externalTrafficPolicy: Local` to preserve the original client IP on NodePort/LoadBalancer services.
 - **Default-deny NetworkPolicy** is your baseline — apply it to every namespace, then explicitly open only required traffic paths.
 - CNI choice determines whether NetworkPolicies are enforced at all — Flannel does not support them; Cilium and Calico do.
+
+---
+
+## Review Questions
+
+### Beginner
+
+1. What is the difference between East-West traffic and North-South traffic in a Kubernetes cluster?
+2. What is the default Service type in Kubernetes, and what kind of traffic is it designed for?
+3. What is the role of CoreDNS in a Kubernetes cluster, and what DNS format does it use to resolve service names?
+4. What does a Headless Service do differently from a regular ClusterIP Service, and when would you use one?
+5. Without any NetworkPolicy applied to a namespace, what is the default traffic behavior for pods in that namespace?
+
+### Intermediate
+
+1. A team has deployed a web application using a LoadBalancer Service and is seeing the original client IP replaced with the node's IP in their access logs. What field would you configure to fix this, and what trade-off does it introduce?
+2. Your cluster is running 2,000 Services and you are experiencing latency during kube-proxy rule updates. Describe the two alternative kube-proxy modes that would address this, and explain why the default iptables mode struggles at this scale.
+3. You need to apply a NetworkPolicy that allows the `payments` pod in the `checkout` namespace to receive traffic only from pods labeled `role: api` in the `frontend` namespace, while blocking everything else. Walk through the selectors and policy types you would use to achieve this.

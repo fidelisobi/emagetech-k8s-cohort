@@ -281,3 +281,20 @@ kubectl apply -n argocd \
 4. **ApplicationSets eliminate boilerplate** — a single ApplicationSet with a Git directory generator can manage dozens of applications without repeating Application manifests.
 5. **Auto-prune is opt-in** — resources are not deleted automatically unless `prune: true` is explicitly set; this is a safety measure, not a default.
 6. **Sync waves control order** — use `argocd.argoproj.io/sync-wave` annotations to ensure CRDs and namespaces are created before the workloads that depend on them.
+
+---
+
+## Review Questions
+
+### Beginner
+
+1. What is GitOps, and how does it differ from a traditional push-based CI/CD pipeline where a pipeline script runs `kubectl apply`?
+2. What are the two fields that every ArgoCD `Application` CRD must define, and what does each one describe?
+3. What does ArgoCD "drift" mean, and what sync policy setting causes ArgoCD to automatically correct it?
+4. What is the difference between `auto-prune: true` and `selfHeal: true` in an ArgoCD sync policy? Why is auto-prune opt-in rather than the default?
+5. What problem do sync waves solve, and how does a lower wave number affect when a resource is applied relative to resources with a higher wave number?
+
+### Intermediate
+
+1. Your platform team needs to deploy the same application to 15 different namespaces — one per tenant — each with a slightly different values file. Describe how you would use an ApplicationSet to accomplish this without writing 15 individual Application manifests, and which generator type you would choose.
+2. A developer runs `kubectl edit deployment my-app` directly on a production cluster managed by ArgoCD to bump the replica count during an incident. Describe what happens next in terms of ArgoCD's reconciliation loop, how self-heal interacts with the change, and what the correct long-term process should be to avoid this pattern in the future.

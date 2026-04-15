@@ -331,3 +331,21 @@ kubectl logs job/kube-bench
 4. **Runtime security catches what prevention misses** — zero-days and misconfigurations slip through static analysis; Falco and Tetragon provide a final detection layer in production.
 5. **SBOMs and image signing close the supply chain gap** — knowing exactly what is in every image and proving it has not been tampered with is increasingly a compliance requirement.
 6. **Defense-in-depth is the strategy** — no single tool covers everything; layer SAST, image scanning, admission control, and runtime monitoring for comprehensive coverage.
+
+---
+
+## Review Questions
+
+### Beginner
+
+1. What does "shift-left security" mean, and why is it more cost-effective than catching vulnerabilities later in the pipeline?
+2. What is the difference between a mutating admission webhook and a validating admission webhook?
+3. What does Trivy scan for, and how do you configure it to fail a pipeline on critical vulnerabilities?
+4. What is a Software Bill of Materials (SBOM), and which tools can generate one?
+5. What is the difference between OPA/Gatekeeper and Kyverno? Which would you choose for a team already familiar with Kubernetes YAML?
+
+### Intermediate
+
+1. A new developer pushes a container image built from an unverified base image on Docker Hub to your production cluster, bypassing the approved registry list. Which layer(s) of the DevSecOps pipeline should have caught this, and what would need to be configured in each layer to prevent it?
+2. You have deployed Falco on your cluster and receive a `Shell Spawned in Container` alert for a pod running a legitimate debug toolbox image. How would you suppress false positives for that specific image without weakening the rule for all other containers?
+3. Your team is deciding between running Gatekeeper policies in `deny` mode versus `dryrun` mode during initial rollout. What are the trade-offs, and what process would you follow to safely transition from dryrun to enforcement in a production cluster?

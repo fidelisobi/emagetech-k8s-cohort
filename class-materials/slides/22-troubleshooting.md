@@ -229,3 +229,21 @@ This creates a new pod called `debug-pod` with `busybox` instead of the original
 - OOMKilled means the container hit its memory limit — increase the limit or find the memory leak; it is not a node-level issue
 - Pending pods with `FailedScheduling` tell you exactly why scheduling failed — read the message carefully before scaling up nodes
 - Networking problems almost always trace back to one of three things: selector mismatch (no endpoints), missing NetworkPolicy allow rule, or DNS failure
+
+---
+
+## Review Questions
+
+### Beginner
+
+1. What command would you run first when a pod is not starting, and why is it the recommended starting point?
+2. What does the `CrashLoopBackOff` status mean, and which command lets you see logs from the previous (crashed) instance of the container?
+3. A pod shows status `OOMKilled`. What caused this, and what are your two options to resolve it?
+4. What is the difference between `ImagePullBackOff` and `CreateContainerConfigError`? What would you check for each?
+5. A pod is stuck in `Pending`. Name three different reasons this could happen and the debug command you would use for each.
+
+### Intermediate
+
+1. Your application is deployed and the pod shows `Running`, but HTTP requests to the Service return `503 Service Unavailable`. Walk through the full sequence of checks you would perform, starting from the Service and working inward to the pod.
+2. You have a distroless container that is misbehaving in production — you cannot use `kubectl exec` to get a shell. Describe the two `kubectl debug` approaches available, when you would choose each one, and what the `--target` and `--copy-to` flags do.
+3. A team member updated a ConfigMap that stores environment variables for a running Deployment, but the application is still reading the old values. Explain why this is happening, how the behavior differs for volume-mounted ConfigMaps, and what steps are needed to resolve it.

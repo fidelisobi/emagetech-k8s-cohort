@@ -494,3 +494,20 @@ spec:
 - AWS offers two options: **IRSA** (works everywhere, more complex) and **Pod Identity** (simpler, requires agent add-on).
 - **Least privilege matters** — one ServiceAccount per workload, scoped to the minimum permissions needed.
 - Workload Identity integrates naturally with other platform add-ons: external-secrets-operator, external-dns, and cert-manager all use it to authenticate to cloud APIs (Session 19).
+
+---
+
+## Review Questions
+
+### Beginner
+
+1. What is the main security risk of storing a cloud service account JSON key file as a Kubernetes Secret?
+2. What underlying protocol does Workload Identity use to federate a Kubernetes ServiceAccount with a cloud IAM identity across all three providers (GKE, EKS, AKS)?
+3. On GKE, what annotation do you add to a Kubernetes ServiceAccount to link it to a GCP Service Account?
+4. What is the difference between AWS IRSA and AWS EKS Pod Identity in terms of setup complexity and what each requires?
+5. What is the recommended token lifetime for Workload Identity credentials, and why is this preferable to long-lived static keys?
+
+### Intermediate
+
+1. A pod running on GKE is returning a `403 Forbidden` error when calling the GCS API, even though the correct annotation is on the Kubernetes ServiceAccount. Walk through the checklist of things you would verify to diagnose the root cause, referencing the specific GKE setup steps.
+2. Your organization uses Terraform to manage infrastructure. Why is it considered a best practice to Terraform the IAM-to-ServiceAccount bindings for Workload Identity rather than running the `gcloud`/`aws`/`az` CLI commands manually? What risks does the manual approach introduce at scale?

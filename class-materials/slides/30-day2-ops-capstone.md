@@ -344,3 +344,21 @@ helm upgrade --install my-app charts/my-app \
 4. **Right-size before you scale** — over-provisioned requests waste money silently; run VPA in recommendation mode for a week before setting production resource requests.
 5. **PodDisruptionBudgets are upgrade safety nets** — configure them for all stateful and business-critical workloads so node drains during upgrades never take a service below its minimum replicas.
 6. **The capstone integrates every session** — containerization, Helm, secrets, networking, observability, GitOps, and autoscaling are not independent topics; in production they all interlock exactly as the capstone tasks demonstrate.
+
+---
+
+## Review Questions
+
+### Beginner
+
+1. Why must Kubernetes cluster upgrades always move one minor version at a time rather than skipping versions?
+2. What does Velero back up, and how would you create a scheduled nightly backup of a specific namespace?
+3. What are PodDisruptionBudgets, and why are they important during node pool upgrades?
+4. What is the difference between Surge, Blue/Green, and In-place node pool upgrade strategies? When would you choose Blue/Green over Surge?
+5. What types of resources contribute most to Kubernetes cloud costs, and what is one technique to reduce each?
+
+### Intermediate
+
+1. Your staging cluster is running Kubernetes 1.28 and you need to upgrade it to 1.30. A developer on your team suggests doing it in a single step to save time. How would you explain the risk, and what is the correct upgrade path? What tooling would you use to check for API deprecations before starting?
+2. A production incident caused accidental deletion of an entire namespace containing stateful workloads. Walk through the full recovery process using Velero, including what prerequisites must have been in place before the deletion occurred for recovery to be possible.
+3. Your platform team is designing a multi-cluster architecture for a globally distributed SaaS product that must remain available even if an entire cloud region goes down. Compare Active-Active and Active-Passive topologies for this use case, including the operational trade-offs for data consistency, cost, and failover complexity.

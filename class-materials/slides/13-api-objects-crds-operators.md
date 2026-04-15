@@ -263,3 +263,21 @@ spec:
 4. **Operators encode operational knowledge** — the reconciliation loop replaces the human operator running repetitive tasks.
 5. **Labels drive behavior; annotations store context** — use labels for selection and routing, annotations for tooling metadata and audit trails.
 6. **The Aggregation Layer proxies, not embeds** — extension API servers are separate processes; the API server routes traffic to them.
+
+---
+
+## Review Questions
+
+### Beginner
+
+1. What are the four top-level fields in a Kubernetes manifest (`apiVersion`, `kind`, `metadata`, `spec`) and what does each one define?
+2. What is the difference between a label and an annotation? Give a real-world example of when you would use each.
+3. What is a Custom Resource Definition (CRD), and why would you create one instead of using a standard Kubernetes object?
+4. Name three real-world Kubernetes Operators and describe what custom resources each one introduces.
+5. What are the two types of API groups in Kubernetes, and how do their URL paths differ?
+
+### Intermediate
+
+1. A team wants to find all pods with the label `environment=production` but NOT the label `deprecated`. Write the `kubectl` command using set-based selectors to do this.
+2. You install an Operator in the cluster but notice that creating the custom resource (CR) has no visible effect. Walk through what you would check — from the CRD definition to the controller's reconciliation loop — to diagnose the problem.
+3. What is the difference between a Mutating Admission Webhook and a Validating Admission Webhook? Give an example use case for each and explain the order they run in the API server request pipeline.

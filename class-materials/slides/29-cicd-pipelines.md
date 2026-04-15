@@ -294,3 +294,21 @@ ArgoCD detects the commit → syncs to cluster → deployment complete.
 4. **Use yq or kustomize to update manifests** — `sed` is brittle for YAML manipulation; structure-aware tools prevent silent failures and merge conflicts.
 5. **Workload Identity / OIDC eliminates static keys** — never store long-lived cloud credentials in CI secrets; use short-lived OIDC tokens federated to your cloud provider.
 6. **Git Branch Promotion needs separate Application resources** — each environment requires its own ArgoCD Application with a distinct `targetRevision`; one Application cannot track multiple branches.
+
+---
+
+## Review Questions
+
+### Beginner
+
+1. What is the difference between Continuous Integration (CI) and Continuous Delivery/Deployment (CD)? Which tool covered in this session handles each role?
+2. Why should a CI pipeline never run `kubectl apply` directly, even if it has the credentials to do so?
+3. What problem does tagging images with the git SHA solve compared to using the `:latest` tag?
+4. What is Workload Identity Federation, and why is it preferred over storing static service account keys in CI secrets?
+5. At which stage in the pipeline should you run Trivy, and what should happen to the pipeline if a CRITICAL vulnerability is found?
+
+### Intermediate
+
+1. A teammate proposes updating the image tag in `values.yaml` using `sed -i "s|tag:.*|tag: $SHA|"` in the CI pipeline. What specific failure modes does this approach introduce, and what would you recommend instead?
+2. Your team uses a single GitOps repository and wants to promote the same image artifact from dev to staging to production. Describe the pipeline steps and ArgoCD configuration changes needed to implement image promotion safely, including the approval gate before production.
+3. You are setting up a new GitHub Actions pipeline to build and push images to Google Artifact Registry. A security review flags that the pipeline currently uses a downloaded JSON service account key. Explain how you would redesign the authentication step using OIDC, and what GCP-side configuration is required to make it work.

@@ -294,3 +294,21 @@ spec:
 - PSS Baseline blocks the most dangerous escalation vectors (hostPID, hostIPC, hostNetwork, privileged containers); use Restricted for workloads that can tolerate stricter constraints
 - Use Workload Identity (GKE/IRSA/Azure WI) instead of storing cloud credentials as Kubernetes Secrets
 - Audit RBAC regularly: `kubectl auth can-i --list --as=system:serviceaccount:<ns>:<sa>`
+
+---
+
+## Review Questions
+
+### Beginner
+
+1. What are the four initial namespaces created in a Kubernetes cluster, and what is each used for?
+2. What is the difference between a `Role` and a `ClusterRole`? When would you use a `ClusterRoleBinding` instead of a `RoleBinding`?
+3. What is the difference between a `ResourceQuota` and a `LimitRange`? What does each one enforce?
+4. What are the three Pod Security Standards levels, and which is appropriate for a standard application workload that doesn't need privileged access?
+5. What does the principle of least privilege mean in the context of Kubernetes RBAC?
+
+### Intermediate
+
+1. A namespace has a `ResourceQuota` applied, but Pods in that namespace are failing to schedule with an error about missing resource requests. Why is this happening, and what must developers do to resolve it?
+2. Your security team has flagged that a CI pipeline's ServiceAccount has `ClusterRoleBinding` to `cluster-admin`. Describe the risks this introduces and the steps you would take to replace it with a least-privilege RBAC configuration scoped only to what the pipeline actually needs.
+3. A pod labeled `app: scraper` needs to call the Kubernetes API to list pods and read ConfigMaps in its own namespace. Write out the Role and RoleBinding YAML required to grant exactly this access and nothing more.

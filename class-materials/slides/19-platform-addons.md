@@ -396,3 +396,20 @@ https://app.example.com  ✓  (TLS auto-renewed, DNS auto-managed, secrets auto-
 - **Reloader** solves the Kubernetes gap where volume-mounted ConfigMaps update on disk but apps don't re-read them, and env vars never update at all — it triggers rolling restarts when referenced ConfigMaps or Secrets change.
 - All four tools follow the same pattern: **CRD + Controller reconciling external state** — the Operator pattern.
 - Together they deliver a fully declarative, self-healing stack: secrets synced, TLS provisioned, DNS updated, apps restarted — zero manual steps after initial configuration.
+
+---
+
+## Review Questions
+
+### Beginner
+
+1. What is the difference between an `Issuer` and a `ClusterIssuer` in cert-manager?
+2. Why should you always use the Let's Encrypt staging server when testing cert-manager, before switching to the production server?
+3. What is the key advantage of the DNS-01 challenge over HTTP-01, and what type of certificate does it uniquely enable?
+4. What problem does external-secrets-operator solve, and why is storing secrets directly in Git considered a risk even if they are base64-encoded?
+5. Why does Kubernetes NOT restart a Pod automatically when a referenced ConfigMap or Secret changes, and how does Reloader address this?
+
+### Intermediate
+
+1. Your team sets `policy: sync` in external-dns and uses a broad `domainFilters` of `example.com`. A colleague then deletes a Deployment. What is the risk this configuration introduces, and how would you mitigate it during an initial rollout?
+2. Walk through the end-to-end flow that takes an application from zero to `https://app.example.com` — identifying exactly which platform add-on handles each step and in what order. Include the role of Workload Identity in authenticating each add-on to GCP.

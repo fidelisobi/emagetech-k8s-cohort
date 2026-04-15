@@ -373,3 +373,21 @@ resources:
 4. **Init containers are the right tool for dependency ordering** — prefer them over sleep loops or retry logic in your main container.
 5. **QoS is implicit, not declared** — Kubernetes derives it from your resource requests and limits. Set requests == limits for critical workloads to get Guaranteed class.
 6. **BestEffort pods are eviction targets** — never run production workloads without resource requests.
+
+---
+
+## Review Questions
+
+### Beginner
+
+1. What are the five pod phases in Kubernetes? What does it mean when a pod is in the `Unknown` phase?
+2. What is the difference between the three container restart policies (`Always`, `OnFailure`, `Never`) and when would you use each?
+3. What are the three types of health probes, and what is the key difference in what each one controls?
+4. What is an init container, and how does it differ from a regular container in a pod?
+5. What is the difference between a resource `request` and a resource `limit` for CPU and memory?
+
+### Intermediate
+
+1. A pod is stuck in `Pending` state. List at least three different root causes that could produce this phase and describe how you would distinguish between them using `kubectl`.
+2. Your application takes 3 minutes to start up, but the liveness probe starts failing after 90 seconds, causing the kubelet to restart the container in a loop. What is the correct fix, and why does it work?
+3. A node runs low on memory and Kubernetes must evict pods. You have three pods: one with `Guaranteed` QoS, one with `Burstable`, and one with `BestEffort`. Explain the eviction order and what resource configurations produced each QoS class.

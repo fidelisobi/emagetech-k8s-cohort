@@ -263,3 +263,21 @@ A group of one or more computers, or nodes, that can run in parallel to achieve 
 - **etcd** is the single source of truth; losing it means losing all knowledge of what the cluster is supposed to look like.
 - **Worker nodes** run the actual workloads via kubelet, kube-proxy, and a container runtime; they take instructions from the control plane.
 - Kubernetes operates on a **reconciliation loop** — it constantly observes current state, compares it to desired state, and acts to close any gap.
+
+---
+
+## Review Questions
+
+### Beginner
+
+1. What is Kubernetes and what problem does it solve for teams running containerized applications?
+2. Name the four components of the Kubernetes control plane and describe what each one does.
+3. What is the role of the kubelet on a worker node, and how does it differ from kube-proxy?
+4. Why must etcd always have an odd number of members (e.g., 3, 5, 7)?
+5. What is the difference between a managed Kubernetes service (like GKE or EKS) and running upstream Kubernetes yourself?
+
+### Intermediate
+
+1. A new pod is submitted to the cluster but never gets scheduled. Walk through the control-plane components that would be involved in diagnosing this — what would each component's role be?
+2. The reconciliation loop is described as "observe → diff → act." Give a concrete example of what each step looks like when a Deployment's desired replica count is changed from 3 to 5.
+3. Why is the API server described as "stateless," and what implications does that have for cluster resilience and scalability?
