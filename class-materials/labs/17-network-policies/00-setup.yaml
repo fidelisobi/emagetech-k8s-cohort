@@ -1,0 +1,157 @@
+# ============================================================
+# Lab 17 — Network Policies: Setup
+# ============================================================
+# This file creates the namespace and workloads we will use
+# throughout the network-policy lab exercises.
+#
+# Apply this first:
+#   kubectl apply -f 00-setup.yaml
+# ============================================================
+
+# --- Namespace -----------------------------------------------
+# All lab resources live in a dedicated namespace so we can
+# clean up everything with a single `kubectl delete namespace`.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: netpol-lab
+  labels:
+    # Label the namespace so it can be targeted by policies later
+    kubernetes.io/metadata.name: netpol-lab
+
+---
+# --- Backend Deployment --------------------------------------
+# A simple nginx container standing in for a backend service.
+# Note the label  role: backend  — NetworkPolicy selectors
+# match on labels, NOT on deployment names.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  namespace: netpol-lab
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+        role: backend       # used by NetworkPolicy selectors
+    spec:
+      containers:
+        - name: backend
+          image: nginx:1.25-alpine
+          ports:
+            - containerPort: 8080   # we serve on 8080 to match the policy exercises
+          # Override nginx default port from 80 → 8080
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              sed -i 's/listen\s*80;/listen 8080;/g' /etc/nginx/conf.d/default.conf && \
+              nginx -g 'daemon off;'
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "64Mi"
+            limits:
+              cpu: "100m"
+              memory: "128Mi"
+
+---
+# --- Backend Service -----------------------------------------
+# ClusterIP service that exposes the backend pods.
+# Pods in the namespace reach the backend via:
+#   http://backend-svc:8080
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend-svc
+  namespace: netpol-lab
+spec:
+  selector:
+    app: backend        # routes to pods with label app=backend
+  ports:
+    - name: http
+      port: 8080        # service port
+      targetPort: 8080  # container port
+
+---
+# --- Frontend Deployment -------------------------------------
+# A simple curl-capable container standing in for a frontend
+# that needs to call the backend.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  namespace: netpol-lab
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+        role: frontend      # used by NetworkPolicy selectors
+    spec:
+      containers:
+        - name: frontend
+          image: curlimages/curl:8.5.0
+          # Keep the pod running so we can exec into it for tests
+          command: ["sleep", "infinity"]
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "32Mi"
+            limits:
+              cpu: "100m"
+              memory: "64Mi"
+
+---
+# --- Frontend Service ----------------------------------------
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend-svc
+  namespace: netpol-lab
+spec:
+  selector:
+    app: frontend
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80
+
+---
+# --- Attacker Pod (for testing policies) ---------------------
+# An extra pod with no special labels — we use this to verify
+# that traffic from "untrusted" sources is blocked.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: attacker
+  namespace: netpol-lab
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: attacker
+  template:
+    metadata:
+      labels:
+        app: attacker   # NOT matched by any allow-rule
+    spec:
+      containers:
+        - name: attacker
+          image: curlimages/curl:8.5.0
+          command: ["sleep", "infinity"]
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "32Mi"
+            limits:
+              cpu: "100m"
+              memory: "64Mi"

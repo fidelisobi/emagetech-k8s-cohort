@@ -1,0 +1,167 @@
+# ============================================================
+# Lab 18 — Gateway API: Step 3 — Traffic Splitting (Canary)
+# ============================================================
+# Gateway API supports weighted traffic splitting natively via
+# the `weight` field on backendRefs.
+#
+# This is the canary deployment pattern:
+#   90% of traffic → stable (v1)
+#    10% of traffic → canary (v2)
+#
+# Gradually shift weight as confidence in the canary grows:
+#   90/10 → 80/20 → 50/50 → 0/100 (fully promoted)
+#
+# Apply:
+#   kubectl apply -f 03-httproute-traffic-split.yaml
+#
+# Watch the split in action (run in a loop):
+#   GW_IP=$(kubectl get gateway shared-gateway -n gateway-lab \
+#     -o jsonpath='{.status.addresses[0].value}')
+#   for i in $(seq 1 20); do curl -s http://$GW_IP/app; echo; done
+#   # ~18 responses should say "v1", ~2 should say "v2"
+# ============================================================
+
+# --- Stable (v1) deployment ----------------------------------
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app-v1
+  namespace: gateway-lab
+  labels:
+    app: app
+    version: v1
+spec:
+  replicas: 2                     # more replicas for stable
+  selector:
+    matchLabels:
+      app: app
+      version: v1
+  template:
+    metadata:
+      labels:
+        app: app
+        version: v1
+    spec:
+      containers:
+        - name: app
+          image: hashicorp/http-echo:latest
+          args:
+            - "-text=v1 — stable release"
+            - "-listen=:8080"
+          ports:
+            - containerPort: 8080
+          resources:
+            limits:
+              cpu: "100m"
+              memory: "64Mi"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: app-v1-svc
+  namespace: gateway-lab
+spec:
+  selector:
+    app: app
+    version: v1           # routes ONLY to v1 pods
+  ports:
+    - port: 8080
+      targetPort: 8080
+
+---
+# --- Canary (v2) deployment ----------------------------------
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app-v2
+  namespace: gateway-lab
+  labels:
+    app: app
+    version: v2
+spec:
+  replicas: 1                     # fewer replicas for canary
+  selector:
+    matchLabels:
+      app: app
+      version: v2
+  template:
+    metadata:
+      labels:
+        app: app
+        version: v2
+    spec:
+      containers:
+        - name: app
+          image: hashicorp/http-echo:latest
+          args:
+            - "-text=v2 — canary release"
+            - "-listen=:8080"
+          ports:
+            - containerPort: 8080
+          resources:
+            limits:
+              cpu: "100m"
+              memory: "64Mi"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: app-v2-svc
+  namespace: gateway-lab
+spec:
+  selector:
+    app: app
+    version: v2           # routes ONLY to v2 pods
+  ports:
+    - port: 8080
+      targetPort: 8080
+
+---
+# --- HTTPRoute with weighted traffic split ------------------
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: canary-route
+  namespace: gateway-lab
+  annotations:
+    # Document the current canary stage for your team
+    canary.stage: "initial-10-percent"
+spec:
+  parentRefs:
+    - name: shared-gateway
+      namespace: gateway-lab
+      sectionName: http
+
+  hostnames:
+    - "lab.example.com"
+
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /app    # all requests to /app are split
+      backendRefs:
+        # weight values are RELATIVE, not percentages.
+        # 9 + 1 = 10 total units.
+        # v1 receives 9/10 = 90% of requests.
+        # v2 receives 1/10 = 10% of requests.
+        - name: app-v1-svc
+          port: 8080
+          weight: 9       # 90% — stable
+
+        - name: app-v2-svc
+          port: 8080
+          weight: 1       # 10% — canary
+
+# ============================================================
+# TO PROMOTE THE CANARY TO 100%
+# Change the weights and re-apply:
+#
+#   weight: 0   # for app-v1-svc
+#   weight: 10  # for app-v2-svc
+#
+# Then delete the v1 deployment and update app-v1-svc
+# to point to v2 pods, or simply switch to a single backendRef.
+# ============================================================

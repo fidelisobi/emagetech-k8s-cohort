@@ -1,0 +1,171 @@
+# ============================================================
+# Lab 18 — Gateway API: Step 2 — HTTPRoute (Path-based Routing)
+# ============================================================
+# An HTTPRoute defines routing rules for HTTP traffic.
+# It attaches to a Gateway listener and routes requests to
+# backend services based on path, headers, or method.
+#
+# This route demonstrates PATH-BASED ROUTING:
+#   GET /api/*   → api-service:8080
+#   GET /web/*   → frontend-svc:80
+#
+# Key difference from Ingress:
+#   - HTTPRoute is namespace-scoped and managed by the APP team
+#   - The Gateway is managed by the INFRA team
+#   - This separation of concerns is the main benefit of Gateway API
+#
+# Prerequisites:
+#   - 01-gateway.yaml applied
+#   - api-service and frontend-svc must exist
+#
+# Apply:
+#   kubectl apply -f 02-httproute-basic.yaml
+#
+# Verify:
+#   GW_IP=$(kubectl get gateway shared-gateway -n gateway-lab \
+#     -o jsonpath='{.status.addresses[0].value}')
+#   curl http://$GW_IP/api/health
+#   curl http://$GW_IP/web/index.html
+# ============================================================
+
+# --- Namespace for app workloads ----------------------------
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: gateway-lab
+
+---
+# --- Stub api-service (for lab testing) ---------------------
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-service
+  namespace: gateway-lab
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: api-service
+  template:
+    metadata:
+      labels:
+        app: api-service
+    spec:
+      containers:
+        - name: api
+          image: hashicorp/http-echo:latest
+          args:
+            - "-text=Hello from the API backend"
+            - "-listen=:8080"
+          ports:
+            - containerPort: 8080
+          resources:
+            limits:
+              cpu: "100m"
+              memory: "64Mi"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: api-service
+  namespace: gateway-lab
+spec:
+  selector:
+    app: api-service
+  ports:
+    - port: 8080
+      targetPort: 8080
+
+---
+# --- Stub frontend-svc (for lab testing) --------------------
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  namespace: gateway-lab
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+        - name: frontend
+          image: hashicorp/http-echo:latest
+          args:
+            - "-text=Hello from the Frontend"
+            - "-listen=:80"
+          ports:
+            - containerPort: 80
+          resources:
+            limits:
+              cpu: "100m"
+              memory: "64Mi"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend-svc
+  namespace: gateway-lab
+spec:
+  selector:
+    app: frontend
+  ports:
+    - port: 80
+      targetPort: 80
+
+---
+# --- HTTPRoute (path-based routing) -------------------------
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: path-based-route
+  namespace: gateway-lab        # HTTPRoute lives with the app, not the Gateway
+spec:
+  # parentRefs: attach this route to a specific Gateway listener.
+  # The Gateway may be in a different namespace (gateway-lab here).
+  parentRefs:
+    - name: shared-gateway
+      namespace: gateway-lab    # namespace where the Gateway resource lives
+      sectionName: http         # attach to the "http" listener specifically
+
+  # hostnames: optional — restrict this route to specific virtual hosts.
+  # Remove to match ALL hostnames received by the Gateway.
+  hostnames:
+    - "lab.example.com"
+
+  rules:
+    # --- Rule 1: /api prefix → api-service ------------------
+    - matches:
+        - path:
+            type: PathPrefix     # matches /api, /api/, /api/anything
+            value: /api
+      backendRefs:
+        - name: api-service      # Service name in the SAME namespace as HTTPRoute
+          port: 8080
+          weight: 1              # weight for load balancing (only 1 backend here)
+
+    # --- Rule 2: /web prefix → frontend-svc -----------------
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /web
+      # filters: optional transformations applied before forwarding
+      filters:
+        - type: URLRewrite
+          urlRewrite:
+            # Strip the /web prefix before sending to the backend.
+            # e.g.  /web/index.html  →  /index.html
+            path:
+              type: ReplacePrefixMatch
+              replacePrefixMatch: /
+      backendRefs:
+        - name: frontend-svc
+          port: 80
+          weight: 1

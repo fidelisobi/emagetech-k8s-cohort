@@ -1,0 +1,74 @@
+# ============================================================
+# Lab 19 — Platform Addons: Step 2 — Certificate Resource
+# ============================================================
+# A Certificate resource tells cert-manager WHAT certificate
+# to request (domain names, duration, key type) and WHERE to
+# store the resulting TLS keypair (a Kubernetes Secret).
+#
+# cert-manager watches Certificate resources and:
+#   1. Creates a CertificateRequest
+#   2. Performs the ACME DNS01 challenge
+#   3. Stores the signed cert + private key in the named Secret
+#   4. Auto-renews 30 days before expiry (configurable)
+#
+# Apply:
+#   kubectl apply -f 02-certificate.yaml
+#
+# Watch the issuance:
+#   kubectl describe certificate lab-tls-cert -n gateway-lab
+#   kubectl get certificaterequest -n gateway-lab
+#   # Status will progress: Pending → Approved → Ready
+#
+# Once Ready, inspect the Secret:
+#   kubectl get secret lab-tls-secret -n gateway-lab
+#   kubectl describe secret lab-tls-secret -n gateway-lab
+# ============================================================
+
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: lab-tls-cert
+  namespace: gateway-lab        # the Secret will be created in this namespace
+spec:
+  # secretName: cert-manager will create (or update) a Secret with
+  # this name containing tls.crt and tls.key fields.
+  secretName: lab-tls-secret
+
+  # issuerRef: which Issuer/ClusterIssuer should sign this cert.
+  # kind: ClusterIssuer is cluster-scoped (no namespace needed).
+  # kind: Issuer is namespace-scoped.
+  issuerRef:
+    name: letsencrypt-staging   # matches the ClusterIssuer name from step 1
+    kind: ClusterIssuer
+    group: cert-manager.io      # API group for cert-manager resources
+
+  # dnsNames: the Subject Alternative Names (SANs) for the cert.
+  # Add multiple names for a multi-domain cert.
+  # For wildcard certs: "*.cluster-dreams.example.com"
+  dnsNames:
+    - lab.cluster-dreams.example.com
+    - api.cluster-dreams.example.com     # second SAN on the same cert
+
+  # commonName: the CN field in the cert (informational only in modern TLS).
+  # Browsers and clients rely on SANs, not CN.
+  commonName: lab.cluster-dreams.example.com
+
+  # duration: how long the cert should be valid.
+  # Let's Encrypt issues 90-day certs regardless of this value.
+  # cert-manager will auto-renew when `renewBefore` time is reached.
+  duration: 2160h       # 90 days (2160 hours)
+
+  # renewBefore: start renewing this many hours/days before expiry.
+  renewBefore: 720h     # 30 days — renew when 30 days remain
+
+  # privateKey configuration
+  privateKey:
+    algorithm: RSA       # RSA or ECDSA
+    size: 2048           # key size in bits (RSA: 2048 or 4096)
+
+  # usages: key usage extensions for the certificate.
+  # "digital signature" and "key encipherment" are standard for TLS.
+  usages:
+    - digital signature
+    - key encipherment
+    - server auth

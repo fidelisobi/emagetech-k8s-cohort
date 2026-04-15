@@ -1,0 +1,72 @@
+# ============================================================
+# Lab 17 — Network Policies: Step 3 — Allow Egress DNS
+# ============================================================
+# The default-deny-all policy also blocks EGRESS, which means
+# pods cannot resolve DNS names (e.g. "backend-svc").
+# Without DNS, using service names in curl commands fails even
+# if the ingress rule is in place.
+#
+# This policy allows ALL pods in the namespace to send UDP/TCP
+# traffic on port 53 to the cluster's DNS server (kube-dns),
+# restoring name resolution.
+#
+# WHY port 53?
+#   DNS queries travel on port 53 (UDP for queries ≤512 bytes,
+#   TCP for larger responses or zone transfers).
+#
+# Apply:
+#   kubectl apply -f 03-allow-egress-dns.yaml
+#
+# Verify DNS resolution is restored:
+#   FRONTEND=$(kubectl get pod -n netpol-lab -l app=frontend -o name | head -1)
+#   kubectl exec -n netpol-lab $FRONTEND -- nslookup backend-svc
+#
+# Then re-run the curl test — it should now succeed:
+#   kubectl exec -n netpol-lab $FRONTEND -- curl -s --max-time 3 http://backend-svc:8080
+# ============================================================
+
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-egress-dns
+  namespace: netpol-lab
+spec:
+  # Target all pods in the namespace — everyone needs DNS.
+  podSelector: {}
+
+  policyTypes:
+    - Egress              # this policy only governs outbound traffic
+
+  egress:
+    - # Allow outbound UDP on port 53 (standard DNS queries)
+      ports:
+        - protocol: UDP
+          port: 53
+      # No `to:` selector here — allows DNS to ANY destination.
+      # In production you would lock this down to the kube-dns
+      # namespace (kube-system) using a namespaceSelector.
+
+    - # Allow outbound TCP on port 53 (large DNS responses)
+      ports:
+        - protocol: TCP
+          port: 53
+
+# ============================================================
+# PRODUCTION TIP: Restrict DNS to kube-dns only
+# ============================================================
+# Replace the egress rules above with:
+#
+#  egress:
+#    - to:
+#        - namespaceSelector:
+#            matchLabels:
+#              kubernetes.io/metadata.name: kube-system
+#          podSelector:
+#            matchLabels:
+#              k8s-app: kube-dns
+#      ports:
+#        - protocol: UDP
+#          port: 53
+#        - protocol: TCP
+#          port: 53
+# ============================================================
