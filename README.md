@@ -18,7 +18,7 @@ Welcome to the official repository for the **Kubernetes January 2026 Cohort** by
 │
 ├── git-fundamentals/         # Beginner Git → GitOps with ArgoCD (8 tutorials)
 │
-├── projects/                 # 28 hands-on projects across 3 phases (Beginner → Senior Track)
+├── projects/                 # 29 hands-on projects across 3 phases (Beginner → Senior Track)
 │
 ├── student-success/          # Accountability, office hours, mock interviews, job search, placement
 │
@@ -136,6 +136,7 @@ Start with zero Git knowledge and finish understanding GitOps, ArgoCD, and the b
 |---|---------|---------------|
 | 27 | [SLOs, Error Budgets & Toil Reduction](./projects/27-slo-error-budgets/) | SLI/SLO definitions, burn rate alerts, error budget dashboard, deployment freeze |
 | 28 | [vCluster: Virtual Kubernetes Clusters](./projects/28-vcluster/) | 3 isolated virtual clusters in one host, per-tenant isolation without cost of real clusters |
+| 29 | [Backstage Internal Developer Portal](./projects/29-backstage-idp/) | Full Backstage IDP: Software Catalog, ArgoCD + K8s plugins, Tech Radar, Software Templates |
 
 ---
 
@@ -160,12 +161,12 @@ The projects are designed to build on each other. Follow this path based on wher
    Infrastructure ownership: Terraform provisioning, upgrades, multi-cluster, Istio, Operators, Webhooks
    Can build the platform tools others use
 
-🔴 SENIOR — Phase 3 (Projects 22–28)
+🔴 SENIOR — Phase 3 (Projects 22–29)
    Business-level skills: FinOps, performance at scale, DR, CIS hardening, eBPF, SLOs, multi-tenancy
    Can speak at the level of a Staff/Principal engineer
 ```
 
-**You do not need to complete all 28 projects.** The first 15 make you job-ready. Projects 16–28 make you dangerous.
+**You do not need to complete all 28 projects.** The first 15 make you job-ready. Projects 16–29 make you dangerous.
 
 
 ---
@@ -356,21 +357,6 @@ Use this to find your entry point:
 
 ---
 
-## ⏱️ Time Expectations
-
-| Phase | Duration | Commitment |
-|-------|----------|-----------|
-| Foundation (Phase 0) | 1–2 weeks | 2–3 hrs/day |
-| The Class (Phase 1) | 10 weeks | 2 sessions/week + labs |
-| Junior Projects 1–4 | 2 weeks | 1 project every 3–4 days |
-| Mid-Level Projects 5–10 | 3 weeks | 1 project every 3–5 days |
-| Senior Projects 11–15 | 3 weeks | 1 project per week (team) |
-| Senior Projects 16–28 | Ongoing | 1 project/week at your pace |
-| Career Prep | 2–4 weeks | 2–3 hrs/day |
-| Job Search | 4–8 weeks | Applications + interviews |
-| **Total: Job-Ready** | **~5–6 months** | |
-
----
 
 ## 🤝 Need Help?
 
