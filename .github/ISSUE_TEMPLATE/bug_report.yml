@@ -1,0 +1,38 @@
+name: 🐛 Lab / Content Bug
+description: Something in a lab, tutorial, or project README is wrong
+labels: ["bug", "content"]
+body:
+  - type: dropdown
+    id: section
+    attributes:
+      label: Which section?
+      options:
+        - class-materials/labs
+        - projects
+        - network-fundamentals
+        - git-fundamentals
+        - study-ahead-materials
+        - k8s-prereqs
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: file
+    attributes:
+      label: File or path
+      placeholder: "e.g. class-materials/labs/lab-17-network-policies/README.md"
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: What's wrong?
+      description: Paste the incorrect command/YAML and what actually happens
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What should happen instead?
+    validations:
+      required: true
