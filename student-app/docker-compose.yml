@@ -1,0 +1,83 @@
+# =============================================================================
+# Docker Compose — Student Demo App
+#
+# Run the full stack locally without Kubernetes.
+# Great for testing the app before deploying to a cluster, or for the Docker
+# sessions (Sessions 1-10) before students learn Kubernetes.
+#
+# Usage:
+#   docker compose up -d          # start all services
+#   docker compose logs -f api    # follow API logs
+#   docker compose down -v        # stop and remove volumes
+# =============================================================================
+
+services:
+  # ---------------------------------------------------------------------------
+  # PostgreSQL — the database backend
+  # ---------------------------------------------------------------------------
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: studentdb
+      POSTGRES_USER: student
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U student -d studentdb"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # ---------------------------------------------------------------------------
+  # API — Flask REST API with Prometheus metrics
+  # ---------------------------------------------------------------------------
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    environment:
+      # These would come from a ConfigMap in Kubernetes
+      APP_NAME: student-app
+      APP_VERSION: "1.0.0"
+      DB_HOST: db
+      DB_PORT: "5432"
+      DB_NAME: studentdb
+      # These would come from a Secret in Kubernetes
+      DB_USER: student
+      DB_PASSWORD: password
+      # These would come from the Downward API in Kubernetes
+      POD_NAME: api-local
+      POD_NAMESPACE: docker-compose
+      NODE_NAME: localhost
+    ports:
+      - "5000:5000"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5000/health')"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+  # ---------------------------------------------------------------------------
+  # Frontend — Nginx serving static HTML, proxying /api to the API service
+  # ---------------------------------------------------------------------------
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "8080:80"
+    depends_on:
+      api:
+        condition: service_healthy
+    volumes:
+      # Override nginx.conf to use Docker Compose service name instead of K8s DNS
+      - ./nginx-compose.conf:/etc/nginx/nginx.conf:ro
+
+volumes:
+  db-data:
