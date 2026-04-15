@@ -168,6 +168,291 @@ A monitoring system and time-series database. Provides a full monitoring pipelin
 - Kubernetes components (API Server, kubelet, etcd) expose native Prometheus metrics endpoints
 - Prometheus implements native Kubernetes service discovery
 
+**Common Exporters:**
+| Exporter | What It Exposes |
+|----------|----------------|
+| **node-exporter** | Host-level CPU, memory, disk, network (runs as DaemonSet) |
+| **kube-state-metrics** | Kubernetes object state (pod status, deployment replicas, job completions) |
+| **blackbox-exporter** | Probe endpoints for uptime (HTTP, TCP, DNS, ICMP) |
+| **mysqld-exporter** | MySQL server metrics |
+| **redis-exporter** | Redis metrics |
+| **postgres-exporter** | PostgreSQL metrics |
+
+---
+
+## Instrumentation — What It Is and Why It Matters
+
+> **Analogy:** A car's engine doesn't come with a dashboard by default — the manufacturer instruments it by adding sensors (temperature, RPM, oil pressure). Instrumentation is the act of adding those sensors to your application so observability tools have something to read.
+
+**Instrumentation** = adding code or configuration to your application so it emits observability signals (metrics, traces, logs) that monitoring systems can collect.
+
+Without instrumentation, Kubernetes can only tell you about *infrastructure* (CPU, memory, pod status). With instrumentation, you can answer *application-level* questions:
+- How many requests per second is my API handling?
+- What's the 95th percentile response time?
+- Which database query is the bottleneck?
+- Where did this request spend time across microservices?
+
+---
+
+## Instrumentation Approaches
+
+There are three main approaches, from least to most effort:
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                     Instrumentation Spectrum                    │
+│                                                                 │
+│  No code changes              Some code              Deep code  │
+│  ◄──────────────────────────────────────────────────────────►   │
+│                                                                 │
+│  Infrastructure    Exporters/    Auto-         Manual            │
+│  metrics           agents        instrument    instrument        │
+│  (kubelet,         (node-        (OTel agent,  (Prometheus       │
+│   cAdvisor)        exporter,     Datadog,      client, OTel     │
+│                    blackbox)     Dynatrace)    SDK)              │
+│                                                                 │
+│  "Free" with K8s   DaemonSet    Init container  App code changes │
+│                    deploy        or sidecar                      │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+| Approach | What you get | Effort | Best for |
+|----------|-------------|--------|----------|
+| **Infrastructure metrics** | CPU, memory, disk, network, pod state | Zero — built into K8s | Cluster health, capacity planning |
+| **Exporters / agents** | Database stats, uptime probes, host metrics | Deploy a DaemonSet or sidecar | Third-party software (MySQL, Redis, NGINX) |
+| **Auto-instrumentation** | HTTP request rate, latency, error rate, traces | Add an annotation | Standard web frameworks (Spring Boot, Express, Flask, Django) |
+| **Manual instrumentation** | Custom business metrics, fine-grained spans | Write code | Domain-specific metrics (orders/sec, payment failures, queue depth) |
+
+---
+
+## Prometheus Instrumentation (Client Libraries)
+
+Prometheus uses a **pull model** — your app exposes a `/metrics` HTTP endpoint, and Prometheus scrapes it. You add metrics using **Prometheus client libraries**.
+
+**Supported Languages:** Go, Java, Python, Ruby, .NET, Node.js, Rust, and more
+
+**Four Metric Types:**
+
+| Type | Description | Example |
+|------|-------------|---------|
+| **Counter** | Only goes up (resets on restart) | `http_requests_total`, `errors_total` |
+| **Gauge** | Goes up and down | `temperature`, `active_connections`, `queue_size` |
+| **Histogram** | Bucketized distribution of values | `http_request_duration_seconds` (with percentiles) |
+| **Summary** | Like histogram but calculates quantiles client-side | `rpc_duration_seconds` (less common, prefer histogram) |
+
+---
+
+## Prometheus Instrumentation — Python Example
+
+```python
+from prometheus_client import Counter, Histogram, start_http_server
+import time
+
+# Define metrics
+REQUEST_COUNT = Counter(
+    'http_requests_total',
+    'Total HTTP requests',
+    ['method', 'endpoint', 'status']        # labels
+)
+
+REQUEST_LATENCY = Histogram(
+    'http_request_duration_seconds',
+    'HTTP request latency in seconds',
+    ['method', 'endpoint'],
+    buckets=[0.01, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0]
+)
+
+# Instrument your handler
+def handle_request(method, endpoint):
+    start = time.time()
+    try:
+        result = process_request()                # your app logic
+        REQUEST_COUNT.labels(method, endpoint, '200').inc()
+        return result
+    except Exception:
+        REQUEST_COUNT.labels(method, endpoint, '500').inc()
+        raise
+    finally:
+        REQUEST_LATENCY.labels(method, endpoint).observe(time.time() - start)
+
+# Expose /metrics on port 8080
+start_http_server(8080)
+```
+
+**What `/metrics` output looks like:**
+```
+# HELP http_requests_total Total HTTP requests
+# TYPE http_requests_total counter
+http_requests_total{method="GET",endpoint="/api/orders",status="200"} 1547
+http_requests_total{method="GET",endpoint="/api/orders",status="500"} 12
+
+# HELP http_request_duration_seconds HTTP request latency in seconds
+# TYPE http_request_duration_seconds histogram
+http_request_duration_seconds_bucket{method="GET",endpoint="/api/orders",le="0.1"} 1200
+http_request_duration_seconds_bucket{method="GET",endpoint="/api/orders",le="0.5"} 1500
+http_request_duration_seconds_bucket{method="GET",endpoint="/api/orders",le="+Inf"} 1547
+http_request_duration_seconds_sum{method="GET",endpoint="/api/orders"} 312.5
+http_request_duration_seconds_count{method="GET",endpoint="/api/orders"} 1547
+```
+
+This is the raw text that Prometheus scrapes every 15-30 seconds. Each line is a time series identified by its metric name and labels.
+
+---
+
+## Prometheus Instrumentation — Go Example
+
+```go
+package main
+
+import (
+    "net/http"
+    "github.com/prometheus/client_golang/prometheus"
+    "github.com/prometheus/client_golang/prometheus/promhttp"
+)
+
+var (
+    requestCount = prometheus.NewCounterVec(
+        prometheus.CounterOpts{
+            Name: "http_requests_total",
+            Help: "Total HTTP requests",
+        },
+        []string{"method", "endpoint", "status"},
+    )
+
+    requestLatency = prometheus.NewHistogramVec(
+        prometheus.HistogramOpts{
+            Name:    "http_request_duration_seconds",
+            Help:    "HTTP request latency",
+            Buckets: prometheus.DefBuckets,
+        },
+        []string{"method", "endpoint"},
+    )
+)
+
+func init() {
+    prometheus.MustRegister(requestCount, requestLatency)
+}
+
+func main() {
+    // Your app routes here...
+
+    // Expose /metrics endpoint for Prometheus to scrape
+    http.Handle("/metrics", promhttp.Handler())
+    http.ListenAndServe(":8080", nil)
+}
+```
+
+---
+
+## OpenTelemetry Instrumentation
+
+OpenTelemetry takes a different approach from Prometheus — instead of exposing an endpoint and waiting to be scraped, OTel **pushes** telemetry to a Collector (or directly to a backend).
+
+**Key difference:**
+```
+Prometheus:     App ──/metrics──► Prometheus pulls
+OpenTelemetry:  App ──OTLP push──► Collector ──► Any backend
+```
+
+**OTel covers all three signals** (metrics + traces + logs) with a single SDK, while Prometheus only handles metrics.
+
+### Auto-Instrumentation (Zero Code Changes)
+
+Most web frameworks can be auto-instrumented — the OTel agent intercepts HTTP calls, database queries, and gRPC calls automatically:
+
+**Java (agent JAR):**
+```bash
+java -javaagent:opentelemetry-javaagent.jar \
+  -Dotel.service.name=order-service \
+  -Dotel.exporter.otlp.endpoint=http://otel-collector:4317 \
+  -jar myapp.jar
+```
+
+**Python:**
+```bash
+pip install opentelemetry-distro opentelemetry-exporter-otlp
+opentelemetry-bootstrap -a install     # auto-install framework instrumentors
+
+OTEL_SERVICE_NAME=order-service \
+OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317 \
+opentelemetry-instrument python app.py
+```
+
+**Node.js:**
+```bash
+npm install @opentelemetry/auto-instrumentations-node
+OTEL_SERVICE_NAME=order-service \
+OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317 \
+node --require @opentelemetry/auto-instrumentations-node/register app.js
+```
+
+Auto-instrumentation captures: HTTP request/response metrics, database query traces, gRPC call spans, and framework-specific events — with zero application code changes.
+
+---
+
+## OTel Manual Instrumentation — Python Example
+
+When auto-instrumentation isn't enough (custom business metrics, domain-specific spans):
+
+```python
+from opentelemetry import trace, metrics
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.metrics import MeterProvider
+from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
+from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import OTLPMetricExporter
+
+# Setup (typically in app startup)
+trace.set_tracer_provider(TracerProvider())
+trace.get_tracer_provider().add_span_processor(
+    BatchSpanProcessor(OTLPSpanExporter(endpoint="otel-collector:4317"))
+)
+
+tracer = trace.get_tracer("order-service")
+meter = metrics.get_meter("order-service")
+
+# Custom business metric
+orders_placed = meter.create_counter(
+    "orders_placed_total",
+    description="Total orders placed",
+    unit="1"
+)
+
+# Custom trace span
+def place_order(order):
+    with tracer.start_as_current_span("place_order") as span:
+        span.set_attribute("order.id", order.id)
+        span.set_attribute("order.total", order.total)
+        span.set_attribute("order.items", len(order.items))
+
+        validate_inventory(order)     # auto-creates child span if instrumented
+        charge_payment(order)         # auto-creates child span if instrumented
+
+        orders_placed.add(1, {"payment_method": order.payment_method})
+        return order
+```
+
+This produces both a custom metric (`orders_placed_total`) and a trace span (`place_order`) with business context that auto-instrumentation alone cannot capture.
+
+---
+
+## Prometheus vs OTel Instrumentation — When to Use Which
+
+| Aspect | Prometheus Client | OpenTelemetry SDK |
+|--------|------------------|-------------------|
+| **Signals** | Metrics only | Metrics + Traces + Logs |
+| **Model** | Pull (expose `/metrics`) | Push (send to Collector) |
+| **Backend lock-in** | Prometheus-specific format | Vendor-neutral (OTLP) |
+| **Auto-instrumentation** | No (manual only) | Yes (agent-based) |
+| **Maturity** | Battle-tested, very stable | GA for traces/metrics, maturing for logs |
+| **K8s ecosystem** | Deep (ServiceMonitor, kube-prometheus-stack) | Growing (OTel Operator) |
+| **Best for** | Infrastructure/platform teams already on Prometheus | Greenfield apps, multi-backend environments, when you need tracing |
+
+**Practical Guidance:**
+- **Already have Prometheus?** Keep using Prometheus client libraries for metrics. Add OTel SDK for tracing.
+- **New application?** Use OTel SDK for everything — it can export metrics in Prometheus format via the Collector's Prometheus exporter.
+- **Using Datadog/Dynatrace/Cloud Ops?** Use OTel SDK — these platforms all accept OTLP natively, so you instrument once and switch backends freely.
+- **Both can coexist** — many teams use Prometheus client for infrastructure metrics and OTel SDK for application traces in the same cluster.
+
 ---
 
 ## Prometheus Operator
