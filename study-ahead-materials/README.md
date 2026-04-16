@@ -24,27 +24,27 @@ This is a professional Kubernetes training program covering the full spectrum �
 
 ## 📚 Module Index
 
-| # | Module | Sessions | Topics |
-|---|--------|----------|--------|
-| 00a | [Docker Fundamentals](./00-docker-fundamentals.md) | 1–5 | Why Docker, dependency hell, VMs vs Containers, Docker architecture, running containers, images, multi-stage builds, Dockerfile best practices |
-| 00b | [Docker Advanced](./00-docker-advanced.md) | 6–10 | Docker networking, volumes, Docker Compose, container internals (namespaces/cgroups), container security |
-| 01 | [Core Foundations](./01-core-foundations.md) | 11 | Kubernetes overview, CNCF, container orchestration, Kubernetes API, manifest anatomy, declarative config, control loops |
-| 02 | [Pods](./02-pods.md) | 12 | Pod definition, ephemerality, lifecycle phases, liveness/readiness/startup probes, init/sidecar/ephemeral containers, resource requests/limits/QoS, labels/selectors/annotations |
-| 03 | [Kubernetes Architecture](./03-kubernetes-architecture.md) | 13 | Control plane (API server, etcd, scheduler, controller manager), worker nodes (kubelet, kube-proxy, CRI), CoreDNS, namespaces, cluster HA |
-| 04 | [kubectl and the API](./04-kubectl-and-api.md) | 14 | kubectl commands, kubeconfig, API groups/versions (alpha/beta/GA), request lifecycle |
-| 05 | [Pod Controllers](./05-pod-controllers.md) | 15 | Deployments, ReplicaSets, StatefulSets, DaemonSets, Jobs, CronJobs, rolling/canary/blue-green/A-B strategies, Argo Rollouts |
-| 06 | [Networking](./06-networking.md) | 16 | Kubernetes networking model, CNI, Services (ClusterIP/NodePort/LoadBalancer), Ingress, Network Policies, CoreDNS, EndpointSlices, kube-proxy |
-| 07 | [Storage](./07-storage.md) | 17 | Persistent Volumes, PVCs, StorageClass, dynamic provisioning, ConfigMaps, Secrets, DownwardAPI, projected volumes |
-| 08 | [Security](./08-security.md) | 18 | RBAC (Roles, ClusterRoles, RoleBindings), SecurityContext, Pod Security Standards, Network Policies, AppArmor/seccomp |
-| 09 | [Advanced Kubernetes](./09-advanced-kubernetes.md) | 19–20 | CRDs, Operators, admission controllers, webhooks, node affinity, taints/tolerations, HPA, VPA, Cluster Autoscaler, Karpenter, topology spread constraints |
-| 10 | [Helm](./10-helm.md) | 21 | Helm overview, chart structure, values/templates, Go templating, hooks, dependencies |
-| 11 | [Observability](./11-observability.md) | 22 | Logs/Metrics/Traces, Grafana Loki stack, Prometheus/PromQL/Alertmanager, OpenTelemetry, kube-state-metrics |
-| 12 | [Troubleshooting](./12-troubleshooting.md) | 23 | kubectl debug commands, CrashLoopBackOff, Pending pods, OOMKilled, troubleshooting methodology |
-| 13 | [ArgoCD & GitOps](./13-argocd.md) | 24–25 | GitOps, ArgoCD architecture, Applications/AppProjects, sync strategies, hooks/waves, App of Apps, ApplicationSets, RBAC/SSO |
-| 14 | [Istio Service Mesh](./14-istio.md) | 26–27 | Service mesh, Istiod, Envoy sidecars, VirtualService, DestinationRule, Gateway, mTLS, PeerAuthentication, AuthorizationPolicy, Kiali/Jaeger |
-| 15 | [DevSecOps](./15-devsecops.md) | 28 | Shift-left security, SAST/SCA, SLSA/Sigstore/SBOM, image scanning, OPA/Gatekeeper/Kyverno, Falco/Tetragon, NIST/CIS benchmarks |
-| 16 | [CI/CD Pipelines for Kubernetes](./16-cicd-pipelines.md) | 29 | GitHub Actions, Cloud Build, GitOps pipeline patterns, image tagging, environment promotion, Workload Identity Federation, OIDC secrets |
-| 17 | [Day 2 Operations & Capstone](./17-day2-operations.md) | 30 | Cluster upgrades, Velero backups, cert-manager, cost optimization, Spot nodes, Karpenter, multi-cluster strategies, capstone project |
+| # | Module | Topics |
+|---|--------|--------|
+| 00a | [Docker Fundamentals](./00-docker-fundamentals.md) | Why Docker, dependency hell, VMs vs Containers, Docker architecture, running containers, images, multi-stage builds, Dockerfile best practices |
+| 00b | [Docker Advanced](./00-docker-advanced.md) | Docker networking, volumes, Docker Compose, container internals (namespaces/cgroups), container security |
+| 01 | [Core Foundations](./01-core-foundations.md) | Kubernetes overview, CNCF, container orchestration, Kubernetes API, manifest anatomy, declarative config, control loops |
+| 02 | [Pods](./02-pods.md) | Pod definition, ephemerality, lifecycle phases, liveness/readiness/startup probes, init/sidecar/ephemeral containers, resource requests/limits/QoS, labels/selectors/annotations |
+| 03 | [Kubernetes Architecture](./03-kubernetes-architecture.md) | Control plane (API server, etcd, scheduler, controller manager), worker nodes (kubelet, kube-proxy, CRI), CoreDNS, namespaces, cluster HA |
+| 04 | [kubectl and the API](./04-kubectl-and-api.md) | kubectl commands, kubeconfig, API groups/versions (alpha/beta/GA), request lifecycle |
+| 05 | [Pod Controllers](./05-pod-controllers.md) | Deployments, ReplicaSets, StatefulSets, DaemonSets, Jobs, CronJobs, rolling/canary/blue-green/A-B strategies, Argo Rollouts |
+| 06 | [Networking](./06-networking.md) | Kubernetes networking model, CNI, Services (ClusterIP/NodePort/LoadBalancer), Ingress, Network Policies, CoreDNS, EndpointSlices, kube-proxy |
+| 07 | [Storage](./07-storage.md) | Persistent Volumes, PVCs, StorageClass, dynamic provisioning, ConfigMaps, Secrets, DownwardAPI, projected volumes |
+| 08 | [Security](./08-security.md) | RBAC (Roles, ClusterRoles, RoleBindings), SecurityContext, Pod Security Standards, Network Policies, AppArmor/seccomp |
+| 09 | [Advanced Kubernetes](./09-advanced-kubernetes.md) | CRDs, Operators, admission controllers, webhooks, node affinity, taints/tolerations, HPA, VPA, Cluster Autoscaler, Karpenter, topology spread constraints |
+| 10 | [Helm](./10-helm.md) | Helm overview, chart structure, values/templates, Go templating, hooks, dependencies |
+| 11 | [Observability](./11-observability.md) | Logs/Metrics/Traces, Grafana Loki stack, Prometheus/PromQL/Alertmanager, OpenTelemetry, kube-state-metrics |
+| 12 | [Troubleshooting](./12-troubleshooting.md) | kubectl debug commands, CrashLoopBackOff, Pending pods, OOMKilled, troubleshooting methodology |
+| 13 | [ArgoCD & GitOps](./13-argocd.md) | GitOps, ArgoCD architecture, Applications/AppProjects, sync strategies, hooks/waves, App of Apps, ApplicationSets, RBAC/SSO |
+| 14 | [Istio Service Mesh](./14-istio.md) | Service mesh, Istiod, Envoy sidecars, VirtualService, DestinationRule, Gateway, mTLS, PeerAuthentication, AuthorizationPolicy, Kiali/Jaeger |
+| 15 | [DevSecOps](./15-devsecops.md) | Shift-left security, SAST/SCA, SLSA/Sigstore/SBOM, image scanning, OPA/Gatekeeper/Kyverno, Falco/Tetragon, NIST/CIS benchmarks |
+| 16 | [CI/CD Pipelines for Kubernetes](./16-cicd-pipelines.md) | GitHub Actions, Cloud Build, GitOps pipeline patterns, image tagging, environment promotion, Workload Identity Federation, OIDC secrets |
+| 17 | [Day 2 Operations & Capstone](./17-day2-operations.md) | Cluster upgrades, Velero backups, cert-manager, cost optimization, Spot nodes, Karpenter, multi-cluster strategies, capstone project |
 
 ---
 
