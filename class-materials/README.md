@@ -8,6 +8,36 @@
 |------|-------------|
 | [curriculum.md](./curriculum.md) | Full Docker & Kubernetes curriculum (30 sessions) |
 
+## Docker Slide Notes
+
+| Session | Topic |
+|---------|-------|
+| [Session 1](./slides/01-why-docker.md) | Why Docker + Containers vs VMs |
+| [Session 2](./slides/02-docker-architecture.md) | Docker Architecture |
+| [Session 3](./slides/03-running-containers.md) | Running Containers |
+| [Session 4](./slides/04-images-deep-dive.md) | Images Deep Dive |
+| [Session 5](./slides/05-dockerfile-best-practices.md) | Dockerfile Best Practices & Advanced Builds |
+| [Session 6](./slides/06-docker-networking.md) | Docker Networking |
+| [Session 7](./slides/07-docker-volumes.md) | Docker Volumes |
+| [Session 8](./slides/08-docker-compose.md) | Docker Compose & Multi-Container Apps |
+| [Session 9](./slides/09-container-internals.md) | Container Internals |
+| [Session 10](./slides/10-container-security.md) | Container Security |
+
+## Docker Labs
+
+| Lab | Topic |
+|-----|-------|
+| [Lab 01](./labs/01-why-docker/README.md) | First Containers |
+| [Lab 02](./labs/02-docker-architecture/README.md) | Daemon, containerd, runc |
+| [Lab 03](./labs/03-running-containers/README.md) | Lifecycle, Logs, Limits |
+| [Lab 04](./labs/04-images/README.md) | Layers, Tags, Registries |
+| [Lab 05](./labs/05-dockerfiles/README.md) | Multi-Stage, BuildKit, Best Practices |
+| [Lab 06](./labs/06-networking/README.md) | User-Defined Bridges, DNS, netshoot |
+| [Lab 07](./labs/07-volumes/README.md) | Named Volumes, Bind Mounts, Backup/Restore |
+| [Lab 08](./labs/08-compose/README.md) | Multi-Container Stacks |
+| [Lab 09](./labs/09-container-internals/README.md) | Namespaces, cgroups, Capabilities |
+| [Lab 10](./labs/10-container-security/README.md) | Scan, Sign, Harden |
+
 ## Kubernetes Slide Notes
 
 | Session | Topic |
@@ -34,4 +64,3 @@
 | [Session 29](./slides/29-cicd-pipelines.md) | CI/CD Pipelines for Kubernetes |
 | [Session 30](./slides/30-day2-ops-capstone.md) | Day 2 Operations & Capstone |
 
-> **Note:** Docker sessions (1-10) have a separate slide deck.

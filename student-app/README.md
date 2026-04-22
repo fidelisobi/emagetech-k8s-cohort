@@ -79,20 +79,181 @@ student-app/
 
 ## Prerequisites
 
-- Docker (to build images)
-- A Kubernetes cluster (GKE, Minikube, or kind)
+- Docker and Docker Compose (to build and run locally)
+- A Kubernetes cluster (GKE, Minikube, or kind) — for Helm deployment
 - `kubectl` configured to talk to the cluster
 - Helm 3.x
 
-## Quick Start
+---
 
-### 1. Build the Docker images
+## Running Locally with Docker
+
+### Option 1: Docker Compose (Recommended)
+
+The fastest way to get the full stack running locally — one command starts the API, frontend, and PostgreSQL:
 
 ```bash
-# Build the API image
+# Start everything (builds images on first run)
+docker compose up -d
+
+# Verify all services are healthy
+docker compose ps
+
+# Open in browser
+open http://localhost:8080
+```
+
+**What's running:**
+
+| Service | Port | URL |
+|---------|------|-----|
+| Frontend (Nginx) | 8080 | http://localhost:8080 |
+| API (Flask) | 5000 | http://localhost:5000 |
+| PostgreSQL | 5432 | `psql -h localhost -U student -d studentdb` |
+
+**Useful commands:**
+```bash
+# Follow API logs (watch requests come in)
+docker compose logs -f api
+
+# Follow all logs
+docker compose logs -f
+
+# Restart just the API after code changes
+docker compose restart api
+
+# Rebuild after Dockerfile or requirements.txt changes
+docker compose up -d --build
+
+# Stop everything
+docker compose down
+
+# Stop and delete the database volume (fresh start)
+docker compose down -v
+```
+
+**Test the API directly:**
+```bash
+# Health check
+curl http://localhost:5000/health
+
+# Readiness check (verifies DB connection)
+curl http://localhost:5000/ready
+
+# App info (Downward API demo — shows pod/node name)
+curl http://localhost:5000/
+
+# List items
+curl http://localhost:5000/api/items
+
+# Create an item
+curl -X POST http://localhost:5000/api/items \
+  -H "Content-Type: application/json" \
+  -d '{"name": "my-first-item", "value": "hello world"}'
+
+# Prometheus metrics
+curl http://localhost:5000/metrics
+```
+
+### Option 2: Docker Run (Individual Containers)
+
+Run each container separately — useful for understanding how multi-container apps work before learning Docker Compose.
+
+**Step 1: Create a Docker network** (so containers can talk to each other by name):
+```bash
+docker network create student-app-net
+```
+
+**Step 2: Start PostgreSQL:**
+```bash
+docker run -d \
+  --name db \
+  --network student-app-net \
+  -e POSTGRES_DB=studentdb \
+  -e POSTGRES_USER=student \
+  -e POSTGRES_PASSWORD=password \
+  -p 5432:5432 \
+  postgres:16-alpine
+```
+
+**Step 3: Build and start the API:**
+```bash
 docker build -t student-app-api:1.0.0 api/
 
-# Build the frontend image
+docker run -d \
+  --name api \
+  --network student-app-net \
+  -e DB_HOST=db \
+  -e DB_PORT=5432 \
+  -e DB_NAME=studentdb \
+  -e DB_USER=student \
+  -e DB_PASSWORD=password \
+  -e APP_NAME=student-app \
+  -e POD_NAME=api-docker \
+  -e POD_NAMESPACE=local \
+  -e NODE_NAME=localhost \
+  -p 5000:5000 \
+  student-app-api:1.0.0
+```
+
+**Step 4: Build and start the frontend:**
+```bash
+docker build -t student-app-frontend:1.0.0 frontend/
+
+docker run -d \
+  --name frontend \
+  --network student-app-net \
+  -v $(pwd)/nginx-compose.conf:/etc/nginx/nginx.conf:ro \
+  -p 8080:80 \
+  student-app-frontend:1.0.0
+```
+
+**Step 5: Verify everything works:**
+```bash
+# Check all containers are running
+docker ps
+
+# Test the API
+curl http://localhost:5000/health
+
+# Test the frontend (proxies to API)
+curl http://localhost:8080/pod-info
+
+# Open in browser
+open http://localhost:8080
+```
+
+**Cleanup:**
+```bash
+docker stop frontend api db
+docker rm frontend api db
+docker network rm student-app-net
+```
+
+### Docker Concepts Demonstrated
+
+| Concept | Where |
+|---------|-------|
+| Multi-stage build | `api/Dockerfile` (builder → runtime stages) |
+| Non-root user | `api/Dockerfile` (uid 1001) |
+| Layer caching | `api/Dockerfile` (COPY requirements.txt before source) |
+| Environment variables | `docker run -e` / `docker-compose.yml environment:` |
+| Docker networks | `docker network create` / Compose default network |
+| Service discovery (DNS) | Containers reach each other by name (`db`, `api`) |
+| Volume persistence | `docker-compose.yml volumes:` / `docker run -v` |
+| Health checks | `docker-compose.yml healthcheck:` |
+| Port mapping | `-p 8080:80` maps host:container |
+| Bind mounts | `nginx-compose.conf` mounted as volume override |
+
+---
+
+## Deploying to Kubernetes with Helm
+
+### 1. Build and push Docker images
+
+```bash
+# Build the images
+docker build -t student-app-api:1.0.0 api/
 docker build -t student-app-frontend:1.0.0 frontend/
 ```
 
@@ -109,7 +270,7 @@ docker push us-central1-docker.pkg.dev/PROJECT_ID/student-app/api:1.0.0
 docker push us-central1-docker.pkg.dev/PROJECT_ID/student-app/frontend:1.0.0
 ```
 
-### 2. Fetch the PostgreSQL sub-chart
+### 2. Fetch the PostgreSQL sub-chart (Helm dependency)
 
 ```bash
 helm dependency update chart/student-app
