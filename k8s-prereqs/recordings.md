@@ -4,7 +4,7 @@
 
 ---
 
-## Session Recordings
+## Pre-Requisites Recordings
 
 | # | Session | Date | Recording URL | Passcode |
 |---|---------|------|---------------|----------|
@@ -34,6 +34,14 @@
 
 ---
 
+## Docker Recordings
+
+| # | Session | Date | Recording URL | Passcode |
+|---|---------|------|---------------|----------|
+| 1 | Class Recording | 2026-04-23 | https://us02web.zoom.us/rec/share/VSiXOxXpoze44aAZxhirFdLF9ujPa9XWA0E5skdF3axuAMu8sMEEpRJwrrAO3yzA.RQ9V1K5NCsYnU-zx?pwd=DDtykFFGvqr_PTA6CgAAIAAAADnlCZA20SjoM6G7ReRJjy2adi77BRimc5vKLgowrVlaEYSiwM3P3z1-_fr0FBkmkDAwMDAwNA | — |
+
+---
+
 ## Recurring Meeting Links
 
 | Meeting | Link | Passcode |
@@ -42,4 +50,4 @@
 | Linux Training Session II (Wednesdays 7:30pm CT) | https://us02web.zoom.us/j/88675316064?pwd=2e8C4LdrOxpqmL8LQEy1mIUgRt4dgF.1 | 228938 |
 
 ---
-*Last updated: 2026-04-13 | Source: #kubernetes-january-2026-cohort Slack channel*
+*Last updated: 2026-04-23 | Source: #kubernetes-january-2026-cohort Slack channel*
