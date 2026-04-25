@@ -7,6 +7,7 @@
 | File | Description |
 |------|-------------|
 | [curriculum.md](./curriculum.md) | Full Docker & Kubernetes curriculum (30 sessions) |
+| [recordings.md](./recordings.md) | Docker & Kubernetes class Zoom recordings |
 
 ## Docker Slide Notes
 
@@ -22,6 +23,14 @@
 | [Session 8](./slides/08-docker-compose.md) | Docker Compose & Multi-Container Apps |
 | [Session 9](./slides/09-container-internals.md) | Container Internals |
 | [Session 10](./slides/10-container-security.md) | Container Security |
+
+## Assignments
+
+> Lightweight checkpoint after every 2 sessions — bigger than a lab, smaller than a project.
+
+| Assignment | Covers | Topic |
+|------------|--------|-------|
+| [Assignment 01](./assignments/01-cli-and-docker-commands.md) | Sessions 1–2 | CLI Essentials & Docker Commands |
 
 ## Docker Labs
 

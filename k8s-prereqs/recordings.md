@@ -4,7 +4,7 @@
 
 ---
 
-## Pre-Requisites Recordings
+## Session Recordings
 
 | # | Session | Date | Recording URL | Passcode |
 |---|---------|------|---------------|----------|
@@ -32,13 +32,8 @@
 | 22 | Recording for Friday's Session | 2026-03-24 | https://us02web.zoom.us/rec/share/gZjftWvacqDnr8QLws_2QSUJT5yvJYn2pezrwh6Ek2RDB9uN-E-bBMAenIVikCWJ.qWJZhtmqULFg79Tq | 8XPbbC#S |
 | 23 | Yesterday's Class Recording | 2026-03-26 | https://us02web.zoom.us/rec/share/y29mk8irjLY0SOv2woafZiPcgdlkNEET3iOUt7p90Uv971W5-wHNc_-EEj02qoaQ.p4OsxqJMgh2FthDE | %U2%m#HZ |
 
----
-
-## Docker Recordings
-
-| # | Session | Date | Recording URL | Passcode |
-|---|---------|------|---------------|----------|
-| 1 | Class Recording | 2026-04-23 | https://us02web.zoom.us/rec/share/VSiXOxXpoze44aAZxhirFdLF9ujPa9XWA0E5skdF3axuAMu8sMEEpRJwrrAO3yzA.RQ9V1K5NCsYnU-zx?pwd=DDtykFFGvqr_PTA6CgAAIAAAADnlCZA20SjoM6G7ReRJjy2adi77BRimc5vKLgowrVlaEYSiwM3P3z1-_fr0FBkmkDAwMDAwNA | — |
+> Docker and Kubernetes class recordings live in
+> [`../class-materials/recordings.md`](../class-materials/recordings.md).
 
 ---
 
@@ -50,4 +45,4 @@
 | Linux Training Session II (Wednesdays 7:30pm CT) | https://us02web.zoom.us/j/88675316064?pwd=2e8C4LdrOxpqmL8LQEy1mIUgRt4dgF.1 | 228938 |
 
 ---
-*Last updated: 2026-04-23 | Source: #kubernetes-january-2026-cohort Slack channel*
+*Last updated: 2026-04-25 | Source: #kubernetes-january-2026-cohort Slack channel*
