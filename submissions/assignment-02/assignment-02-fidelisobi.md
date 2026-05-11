@@ -1,7 +1,7 @@
 # Assignment 02 — Fidelis Obi
 
 **GitHub username:** fidelisobi
-**Date completed:** YYYY-MM-DD
+**Date completed:** 2026-05-11
 **Language chosen:** Python
 
 ## 1. The image I built
@@ -61,7 +61,8 @@ For a database container, always use stop. Databases need time to flush write bu
 Paste the **command + output** for each of these. Use fenced code blocks. Trim long output to the relevant lines.
 
 - `docker image history cohort-greet:0.1.0`
-```fidelis@workstation:~/assignment/assignment-02$ docker image history cohort-greet:0.1.0
+```
+fidelis@workstation:~/assignment/assignment-02$ docker image history cohort-greet:0.1.0
 IMAGE          CREATED        CREATED BY                                      SIZE      COMMENT
 e7162fb36c6a   20 hours ago   CMD ["python" "app.py"]                         0B        buildkit.dockerfile.v0
 <missing>      20 hours ago   EXPOSE [8000/tcp]                               0B        buildkit.dockerfile.v0
@@ -77,10 +78,12 @@ e7162fb36c6a   20 hours ago   CMD ["python" "app.py"]                         0B
 <missing>      2 days ago     RUN /bin/sh -c set -eux;  apt-get update;  a…   4.94MB    buildkit.dockerfile.v0
 <missing>      2 days ago     ENV LANG=C.UTF-8                                0B        buildkit.dockerfile.v0
 <missing>      2 days ago     ENV PATH=/usr/local/bin:/usr/local/sbin:/usr…   0B        buildkit.dockerfile.v0
-<missing>      6 days ago     # debian.sh --arch 'amd64' out/ 'trixie' '@1…   87.4MB    debuerreotype 0.17```
+<missing>      6 days ago     # debian.sh --arch 'amd64' out/ 'trixie' '@1…   87.4MB    debuerreotype 0.17
+```
 
-- `docker container run` (Part 2.2 — the detached run with all flags)
-```fidelis@workstation:~/assignment/assignment-02$ docker container run -d \
+- `docker container run`
+```
+fidelis@workstation:~/assignment/assignment-02$ docker container run -d \
   --name greet \
   -p 8080:8000 \
   -e STUDENT_NAME="<your name>" \
@@ -89,30 +92,37 @@ e7162fb36c6a   20 hours ago   CMD ["python" "app.py"]                         0B
   --memory 64m \
   --cpus 0.25 \
   cohort-greet:0.1.0
-d9db40180d4883484fc0615229ad16790737ee1cc37bcc0fa336ecca2060a6db```
+d9db40180d4883484fc0615229ad16790737ee1cc37bcc0fa336ecca2060a6db
+```
 
 - `docker container logs greet` after 2 curl requests
 
-```fidelis@workstation:~/assignment/assignment-02$ docker container logs greet
+```
+fidelis@workstation:~/assignment/assignment-02$ docker container logs greet
 listening on :8000
 [req] 172.17.0.1 "GET / HTTP/1.1" 200 -
 [req] 172.17.0.1 "GET / HTTP/1.1" 200 -
 [req] 172.17.0.1 "GET /favicon.ico HTTP/1.1" 200 -
 [req] 172.17.0.1 "GET / HTTP/1.1" 200 -
-[req] 172.17.0.1 "GET /favicon.ico HTTP/1.1" 200 -```
+[req] 172.17.0.1 "GET /favicon.ico HTTP/1.1" 200 -
+
+```
 
 - `docker container stats --no-stream greet`
 
 ```
 fidelis@workstation:~/assignment/assignment-02$ docker container stats --no-stream greet
 CONTAINER ID   NAME      CPU %     MEM USAGE / LIMIT   MEM %     NET I/O           BLOCK I/O         PIDS
-49b1ed263fe2   greet     0.02%     13.49MiB / 64MiB    21.08%    5.84kB / 3.04kB   4.43MB / 1.95MB   1```
+49b1ed263fe2   greet     0.02%     13.49MiB / 64MiB    21.08%    5.84kB / 3.04kB   4.43MB / 1.95MB   1
+
+```
 
 - `docker container inspect -f '{{.HostConfig.RestartPolicy.Name}} {{.HostConfig.Memory}}' greet`
 
 ```
 fidelis@workstation:~/assignment/assignment-02$ docker container inspect -f '{{.HostConfig.RestartPolicy.Name}} {{.HostConfig.Memory}}' greet
-unless-stopped 67108864```
+unless-stopped 67108864
+```
 
 - `docker image ls cohort-greet` (showing the three tags from Part 3.1)
 
@@ -120,7 +130,9 @@ unless-stopped 67108864```
 IMAGE                 ID             DISK USAGE   CONTENT SIZE   EXTRA
 cohort-greet:0.1      e7162fb36c6a        186MB         45.4MB    U
 cohort-greet:0.1.0    e7162fb36c6a        186MB         45.4MB    U
-cohort-greet:latest   e7162fb36c6a        186MB         45.4MB    U```
+cohort-greet:latest   e7162fb36c6a        186MB         45.4MB    U
+
+```
 
 - (Optional) URL of your pushed image on Docker Hub / GHCR
 
