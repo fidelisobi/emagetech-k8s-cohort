@@ -1,7 +1,7 @@
 # Assignment 03 — Fidelis Obi
 
 **GitHub username:** fidelisobi
-**Date completed:** 2026-05-24
+**Date completed:** 2026-05-23
 **Git SHA of submitted app:** sha256:25f09bf6d7886cc6674a86dae3aaede431d19c0e09eb045dcead234b0b33490c
 
 ## 1. Size comparison table
@@ -15,7 +15,7 @@
 
 ## 2. Final image digest
 
-`sha256:25f09bf6d7886cc6674a86dae3aaede431d19c0e09eb045dcead234b0b33490c
+`sha256:25f09bf6d7886cc6674a86dae3aaede431d19c0e09eb045dcead234b0b33490c`
 
 
 ## 3. Answers to the 7 questions
@@ -65,14 +65,49 @@ It shrinked by ~83%.
 Switching from the full python:3.11 base to python:3.11-slim and isolating compilation in a build stage permanently discards heavy compiler toolchains and Python development headers after the RUN pip install layer completes. 
 
 Replacing the naive COPY . . with selective COPY requirements.txt . and COPY app.py . ensures only essential files enter the final image layers.  Finally, adding --no-cache-dir to the pip install step and using COPY --from=build /opt/venv /opt/venv guarantees that only compiled dependencies—not downloaded wheel archives or temporary build artifacts are carried into the runtime stage.
+
 **Q5 — cache-mount timings + CI relevance:** ...
+```
+ -  { time docker image build --no-cache -t cohort-greet:multi . ; } 2>&1 | tail -2
+user    0m0.176s
+sys     0m0.596s
+
+ { time docker image build --no-cache -t cohort-greet:multi . ; } 2>&1 | tail -2
+user    0m0.164s
+sys     0m0.391s
+```
+
+Remote cache matters in CI when dependencies haven't changed.
+If requirements.txt is the same as the last build → Docker pulls the cached pip install layer from remote storage instead of re-downloading and reinstalling everything.
+Result: Build time drops from ~90 seconds to ~15 seconds.
+When it doesn't help:
+If requirements.txt changed → Docker must reinstall dependencies anyway, so the cache is skipped.
+Bottom line:
+Remote caching saves time in CI only when rebuilding the same dependencies. That's why putting COPY requirements.txt before COPY app.py in Dockerfile is critical. it lets CI reuse the expensive install step whenever code changes but your dependencies don't.
+
+
 **Q6 — secret marker + what `ARG` would leak:** ...
-**Q7 — tag vs digest for k8s manifest:** ...
+
+/where-token-was-used output. There was no output.
+```
+fidelis@workstation:~/assignment/assignment-docker image history --no-trunc cohort-greet:secret | grep -i "$PYPI_TOKEN" \N" \
+  && echo "LEAKED" || echo "no leak"
+no leak
+```
+
+If I used ARG PYPI_TOKEN, the full token would be permanently baked into the image's metadata and visible to anyone running docker history or docker inspect. This means the secret would be pushed to registries alongside my image, where it could be easily extracted in plaintext by anyone with pull access. Unlike a secret mount that exists only in memory during a single build step, ARG leaves a permanent, searchable record that compromises credentials the moment the image is shared.
+
+
+
+**Q7 — tag vs digest for k8s manifest:** 
+
+For a production Kubernetes manifest, using the digest pin (cohort-greet@sha256:25f09bf6...). Tags like 0.1.0 or git-19e7439 are mutable labels that can be accidentally overwritten, which could silently deploy untested code or environment issues. The SHA256 digest is a cryptographic fingerprint of the exact image content, guaranteeing Kubernetes pulls precisely the build you validated.
+If your security team mandates exact reproducibility, only the digest is acceptable
 
 ## 4. Files
 
 ### Final `Dockerfile`
-\`\`\`dockerfile
+```
 # syntax=docker/dockerfile:1.7
 
 # ── build stage ──
@@ -106,30 +141,30 @@ USER app
 
 # Exec-form CMD for proper signal handling
 CMD ["gunicorn", "--bind", "0.0.0.0:8080", "app:app"]
-\`\`\`
+```
 
 ### `Dockerfile.naive`
-\`\`\`dockerfile
+```
 FROM python:3.11
 WORKDIR /app
 COPY . .
 RUN pip install -r requirements.txt
 EXPOSE 8080
 CMD gunicorn -b 0.0.0.0:8080 app:app
-\`\`\`
+```
 
 ### `Dockerfile.secret`
-\`\`\`dockerfile
+```
 # syntax=docker/dockerfile:1.7
 FROM python:3.11-slim
 
 RUN --mount=type=secret,id=pypi_token \
     TOKEN=$(head -c 4 /run/secrets/pypi_token) && \
     echo -n "$TOKEN" > /where-token-was-used
-\`\`\`
+```
 
 ### `.dockerignore`
-\`\`\`
+```
 .git
 .gitignore
 node_modules
@@ -139,7 +174,7 @@ Dockerfile*
 .env
 *.log
 README.md
-\`\`\`
+```
 
 ## 5. Evidence
 
@@ -195,6 +230,7 @@ sys     0m0.391s
 ## 6. One trade-off I had to make
 
 (2–4 sentences. Pick **one** decision where the slides offered multiple options and you had to choose: alpine vs slim vs distroless, USER 1000 vs `useradd app`, healthcheck via python vs installing curl, etc. Explain why you chose what you chose and what you'd give up by picking the other.)
+
 
 I chose python:3.11-slim over alpine because Alpine uses musl libc, which is incompatible with most pre-compiled Python wheels built against standard glibc. Using alpine would force the build stage to compile C-extensions from source, requiring heavy compiler toolchains, drastically increasing build time, and risking subtle runtime crashes. The trade-off is a slightly larger final image (~150MB vs ~50MB), but the guaranteed binary compatibility, faster builds, and easier debugging make slim the safer production choice for Python workloads.
 
